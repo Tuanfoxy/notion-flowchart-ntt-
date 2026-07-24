@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive Dynamic Flowchart Engine</title>
+  <!-- Vis.js Network CDN -->
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  
+  <style>
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #2f3437;
+      --card-bg: #f7f6f3;
+      --border-color: #e9e9e7;
+      --accent-color: #2eaadc;
+      --drawer-width: 380px;
+    }
+
+    body.dark-mode {
+      --bg-color: #191919;
+      --text-color: #d4d4d4;
+      --card-bg: #202020;
+      --border-color: #2f2f2f;
+      --accent-color: #529cca;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-color); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+
+    /* Control Toolbar Header */
+    #toolbar {
+      height: 50px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      padding: 0 15px;
+      gap: 10px;
+      z-index: 10;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-color);
+      color: var(--text-color);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: var(--accent-color); color: white; border-color: var(--accent-color); }
+    .btn.active { background: var(--accent-color); color: white; }
+
+    #search-input {
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-size: 13px;
+      outline: none;
+      width: 180px;
+    }
+
+    /* Canvas Area */
+    #main-container { flex: 1; position: relative; display: flex; }
+    #network { flex: 1; height: 100%; background-color: var(--bg-color); }
+
+    /* Slide-out Drawer Modal */
+    #drawer {
+      position: absolute;
+      top: 0; right: 0;
+      width: var(--drawer-width);
+      height: 100%;
+      background: var(--card-bg);
+      border-left: 1px solid var(--border-color);
+      box-shadow: -4px 0 15px rgba(0,0,0,0.05);
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 20;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    #drawer.open { transform: translateX(0); }
+    #drawer-close {
+      position: absolute; top: 15px; right: 15px;
+      background: none; border: none; font-size: 18px;
+      cursor: pointer; color: var(--text-color);
+    }
+    #drawer-content { margin-top: 20px; line-height: 1.6; font-size: 14px; }
+
+    /* Custom Vis Tooltip Styling */
+    div.vis-tooltip {
+      position: absolute;
+      background-color: var(--card-bg) !important;
+      color: var(--text-color) !important;
+      border: 1px solid var(--border-color) !important;
+      border-radius: 6px !important;
+      padding: 8px 12px !important;
+      font-size: 12px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOOLBAR CONTROL -->
+  <div id="toolbar">
+    <input type="text" id="search-input" placeholder="🔍 Tìm kiếm nút..." oninput="handleSearch(this.value)">
+    <button class="btn" id="btn-recall" onclick="toggleActiveRecall()">❓ Active Recall</button>
+    <button class="btn" onclick="resetView()">🔄 Reset Góc Nhìn</button>
+    <button class="btn" onclick="toggleDarkMode()">🌙 / ☀️</button>
+  </div>
+
+  <!-- MAIN CANVAS & DRAWER -->
+  <div id="main-container">
+    <div id="network"></div>
+
+    <!-- Slide-out Drawer -->
+    <div id="drawer">
+      <button id="drawer-close" onclick="closeDrawer()">✕</button>
+      <div id="drawer-content">Chưa chọn nút nào.</div>
+    </div>
+  </div>
+
+  <script>
+    // 1. DATA PAYLOAD (Nạp dữ liệu JSON mẫu vào đây)
+    const rawData = {
+      "nodes": [
+        { "id": 1, "label": "Vi khuẩn Gram-", "group": "target", "level": 1, "tooltip": "💡 Analogy: Thành trì 2 lớp giáp bảo vệ.", "detail": "<h3>📌 Vi khuẩn Gram-âm</h3><p>Có cấu trúc vách kép gồm <b>Màng ngoài</b> (chứa LPS và kênh Porin) và lớp <b>Peptidoglycan mỏng</b> nằm ở vùng nguyên sinh chất.</p>" },
+        { "id": 2, "label": "Kênh Porin", "group": "structure", "level": 2, "tooltip": "💡 Cửa ngõ duy nhất để kháng sinh thân nước đi qua màng ngoài.", "detail": "<h3>🚪 Kênh Porin</h3><p>Các protein tạo lỗ trên màng ngoài Gram-.</p><p><b>Cơ chế kháng:</b> Vi khuẩn đột biến làm <i>giảm số lượng</i> kênh Porin.</p>" },
+        { "id": 3, "label": "Vách Peptidoglycan", "group": "structure", "level": 2, "tooltip": "💡 Khung xương chịu lực giúp vi khuẩn không bị vỡ.", "detail": "<h3>🧱 Vách Peptidoglycan</h3><p>Mạng lưới polymer được tổng hợp nhờ enzyme <b>Transpeptidase (PBP)</b>.</p>" },
+        { "id": 4, "label": "KS Beta-lactam", "group": "drug", "level": 1, "tooltip": "💡 Vũ khí chứa vòng 4 cạnh ức chế tổng hợp vách.", "detail": "<h3>💊 Kháng sinh Beta-lactam</h3><p>Bao gồm Penicillin, Cephalosporin, Carbapenem.</p>" },
+        { "id": 5, "label": "Enzyme PBP", "group": "mechanism", "level": 2, "tooltip": "💡 Đích tác dụng chính của Beta-lactam.", "detail": "<h3>🛠️ PBP (Transpeptidase)</h3><p>Khi Beta-lactam gắn vào PBP $\\rightarrow$ Vách không thể hình thành $\\rightarrow$ Vi khuẩn vỡ.</p>" },
+        { "id": 6, "label": "Enzyme Beta-lactamase", "group": "resistance", "level": 2, "tooltip": "💡 Kéo cắt phá hủy vòng Beta-lactam.", "detail": "<h3>✂️ Beta-lactamase</h3><p>Enzyme do vi khuẩn tiết ra để thủy phân vòng Beta-lactam.</p>" }
+      ],
+      "edges": [
+        { "from": 1, "to": 2, "label": "Chứa" },
+        { "from": 1, "to": 3, "label": "Bao bọc" },
+        { "from": 4, "to": 2, "label": "Thấm qua", "dashes": true },
+        { "from": 4, "to": 5, "label": "Gắn & Ức chế" },
+        { "from": 5, "to": 3, "label": "Xây dựng", "dashes": true },
+        { "from": 6, "to": 4, "label": "Thủy phân", "color": { "color": "#e74c3c" } }
+      ]
+    };
+
+    // 2. VIS.JS ENGINE SETUP
+    let network = null;
+    let nodesDataSet = new vis.DataSet();
+    let edgesDataSet = new vis.DataSet();
+    let isActiveRecall = false;
+
+    // Mapping nhóm ra màu sắc cố định (Semantic Color Palette)
+    const groupColors = {
+      target: { background: '#e3f2fd', border: '#2196f3' },
+      structure: { background: '#f3e5f5', border: '#ab47bc' },
+      drug: { background: '#e8f5e9', border: '#66bb6a' },
+      mechanism: { background: '#fffde7', border: '#ffee58' },
+      resistance: { background: '#ffebee', border: '#ef5350' }
+    };
+
+    function initNetwork() {
+      // Process Nodes
+      const processedNodes = rawData.nodes.map(node => ({
+        id: node.id,
+        label: node.label,
+        originalLabel: node.label,
+        title: node.tooltip, // Tooltip khi hover
+        detail: node.detail,
+        group: node.group,
+        color: groupColors[node.group] || { background: '#ffffff', border: '#cccccc' },
+        font: { size: 14, color: '#2f3437' },
+        shape: 'box',
+        margin: 10,
+        borderWidth: 2
+      }));
+
+      // Process Edges
+      const processedEdges = rawData.edges.map(edge => ({
+        ...edge,
+        arrows: 'to',
+        font: { size: 11, align: 'middle' },
+        smooth: { type: 'cubicBezier' }
+      }));
+
+      nodesDataSet.add(processedNodes);
+      edgesDataSet.add(processedEdges);
+
+      const container = document.getElementById('network');
+      const data = { nodes: nodesDataSet, edges: edgesDataSet };
+      
+      const options = {
+        physics: {
+          stabilization: { iterations: 150 },
+          barnesHut: { gravitationalConstant: -3000, springLength: 120 }
+        },
+        interaction: { hover: true, tooltipDelay: 100 }
+      };
+
+      network = new vis.Network(container, data, options);
+
+      // ĐÓNG BĂNG VẬT LÝ SAU KHI ỔN ĐỊNH (Tránh giật giật/nhảy nút)
+      network.once('stabilizationIterationsDone', function () {
+        network.setOptions({ physics: false });
+      });
+
+      // BẮT SỰ KIỆN CLICK NÚT
+      network.on("click", function (params) {
+        if (params.nodes.length > 0) {
+          const nodeId = params.nodes[0];
+          const nodeData = nodesDataSet.get(nodeId);
+          openDrawer(nodeData.detail);
+          highlightPath(nodeId);
+        } else {
+          closeDrawer();
+          resetHighlight();
+        }
+      });
+    }
+
+    // 3. FEATURE LOGICS
+
+    // Feature: Active Recall Mode (Gỡ nhãn chữ, biến thành ❓)
+    function toggleActiveRecall() {
+      isActiveRecall = !isActiveRecall;
+      document.getElementById('btn-recall').classList.toggle('active', isActiveRecall);
+      
+      const updates = nodesDataSet.get().map(node => ({
+        id: node.id,
+        label: isActiveRecall ? '❓ [Khái niệm]' : node.originalLabel
+      }));
+      nodesDataSet.update(updates);
+    }
+
+    // Feature: Slide-out Drawer (Hiển thị văn bản chi tiết)
+    function openDrawer(content) {
+      document.getElementById('drawer-content').innerHTML = content || 'Không có mô tả chi tiết.';
+      document.getElementById('drawer').classList.add('open');
+    }
+    function closeDrawer() {
+      document.getElementById('drawer').classList.remove('open');
+    }
+
+    // Feature: Backbone Path Highlighting (Làm nổi bật đường nối)
+    function highlightPath(selectedNodeId) {
+      const connectedNodes = network.getConnectedNodes(selectedNodeId);
+      connectedNodes.push(selectedNodeId);
+
+      const allNodes = nodesDataSet.get();
+      const updates = allNodes.map(node => {
+        if (connectedNodes.includes(node.id)) {
+          return { id: node.id, opacity: 1 };
+        } else {
+          return { id: node.id, opacity: 0.2 }; // Mờ các nút không liên quan
+        }
+      });
+      nodesDataSet.update(updates);
+    }
+
+    function resetHighlight() {
+      const allNodes = nodesDataSet.get();
+      const updates = allNodes.map(node => ({ id: node.id, opacity: 1 }));
+      nodesDataSet.update(updates);
+    }
+
+    // Feature: Search & Focus (Tìm kiếm tiêu điểm)
+    function handleSearch(query) {
+      if (!query.trim()) { resetHighlight(); return; }
+      const matchedNode = nodesDataSet.get().find(n => 
+        n.originalLabel.toLowerCase().includes(query.toLowerCase())
+      );
+      if (matchedNode) {
+        network.focus(matchedNode.id, { scale: 1.2, animation: { duration: 500 } });
+        highlightPath(matchedNode.id);
+      }
+    }
+
+    // Feature: Controls & Theme
+    function resetView() {
+      network.fit({ animation: { duration: 500 } });
+      resetHighlight();
+      closeDrawer();
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    // Initialize Engine on load
+    window.onload = initNetwork;
+  </script>
+</body>
+</html>
