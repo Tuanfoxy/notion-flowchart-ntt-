@@ -1,0 +1,89 @@
+{
+  "nodes": [
+    { "id": 1, "label": "CẤU TRÚC VI KHUẨN & ĐÍCH TÁC ĐỘNG", "level": 1, "group": "target", "tooltip": "💡 Anchor: Trụ cột quyết định độc lực & đề kháng lâm sàng", "detail": "<h3>📌 ANCHOR CHÍNH</h3><p>Khác biệt cấu trúc Thành/Màng & Bộ phận bổ trợ quyết định hình thái, phân loại, độc lực và đề kháng lâm sàng.</p>" },
+    
+    { "id": 2, "label": "I. HÌNH THÁI HỌC", "level": 2, "group": "structure", "tooltip": "💡 Hình dạng + Cách sắp xếp", "detail": "<h3>I. Hình thái học</h3><p>Định danh kiểu hình vi khuẩn dựa trên Bergey's Manual.</p>" },
+    { "id": 3, "label": "II. THÀNH PHẦN BẮT BUỘC", "level": 2, "group": "structure", "tooltip": "💡 Sự sống còn & Đích tác động kháng sinh", "detail": "<h3>II. Thành phần bắt buộc</h3><p>Bao gồm Thành, Màng, Ribosome và Thể nhân - Đích tác động của hầu hết kháng sinh.</p>" },
+    { "id": 4, "label": "III. THÀNH PHẦN KHÔNG BẮT BUỘC", "level": 2, "group": "structure", "tooltip": "💡 Thích nghi, Độc lực & Chuyển gen ngang", "detail": "<h3>III. Thành phần không bắt buộc</h3><p>Giúp vi khuẩn tăng độc lực, bám dính, đề kháng và sinh tồn cực hạn.</p>" },
+    { "id": 5, "label": "IV. CASE STUDY LÂM SÀNG", "level": 2, "group": "target", "tooltip": "💡 Dịch Bạch hầu Việt Nam 2016-2020", "detail": "<h3>IV. Case Study Lâm sàng</h3><p>Phân tích dịch tễ, điều trị và dự phòng dịch Bạch hầu tại Việt Nam.</p>" },
+
+    { "id": 6, "label": "Định danh Bergey's Manual", "level": 3, "group": "structure", "tooltip": "💡 Phân loại kiểu hình", "detail": "<h3>📖 Bergey's Manual</h3><p>Hệ thống phân loại dựa trên hình thái hình học vi khuẩn.</p>" },
+    { "id": 7, "label": "1. Cầu khuẩn (Cocci)", "level": 4, "group": "structure", "tooltip": "💡 Cầu, Bầu dục, Lõm", "detail": "<h3>🔴 Cầu khuẩn (Cocci)</h3><ul><li><b>Hình dạng:</b> Cầu (Staphylococcus), Bầu dục (S.faecalis), Lõm 1 cạnh (Neisseria).</li><li><b>Sắp xếp:</b> Riêng lẻ, Cặp đôi (Diplococci), Chuỗi (Streptococci), Cụm 4 (Tetrads), Khối 8 (Sarcina), Chùm (Staphylococci).</li></ul>" },
+    { "id": 8, "label": "2. Trực khuẩn (Bacilli)", "level": 4, "group": "structure", "tooltip": "💡 Que dài, Que ngắn", "detail": "<h3>🟢 Trực khuẩn (Bacilli)</h3><ul><li><b>Hình dạng:</b> Que dài ~20µm (B.subtilis), Que ngắn ~0.5µm (Coccobacilli).</li><li><b>Sắp xếp:</b> Riêng rẽ, Cặp đôi (Diplobacilli), Chuỗi dài (Streptobacilli), Hàng rào/Chữ V (Corynebacterium).</li></ul>" },
+    { "id": 9, "label": "3. Xoắn khuẩn (Spiral)", "level": 4, "group": "structure", "tooltip": "💡 Phẩy, Xoắn vừa, Xoắn nhiều", "detail": "<h3>🌊 Xoắn khuẩn (Spiral)</h3><ul><li><b>Hình dạng:</b> Dấu phẩy (Vibrio), Xoắn vừa (Spirillum), Xoắn nhiều (Spirochetes).</li><li><b>Sắp xếp:</b> Luôn luôn sắp xếp RIÊNG LẺ.</li></ul>" },
+
+    { "id": 16, "label": "1. Thành Tế Bào (Cell Wall)", "level": 3, "group": "structure", "tooltip": "💡 Khung Peptidoglycan NAG-NAM", "detail": "<h3>🧱 Thành Tế Bào</h3><p>Cấu tạo từ khung Peptidoglycan (Dây Glycan NAG-NAM nối bởi liên kết peptide).</p>" },
+    { "id": 17, "label": "2. Màng Tế Bào Chất", "level": 3, "group": "structure", "tooltip": "💡 Phospholipid kép", "detail": "<h3>🌊 Màng Tế Bào Chất</h3><p>Lớp Phospholipid kép + Protein ngoại biên/gắn màng. Kiểm soát trao đổi chất và tạo ATP.</p>" },
+    { "id": 18, "label": "3. Ribosome 70S", "level": 3, "group": "structure", "tooltip": "💡 Tiểu đơn vị 30S + 50S", "detail": "<h3>🧬 Ribosome 70S</h3><p>Bộ máy tổng hợp protein gồm tiểu đơn vị nhỏ 30S và tiểu đơn vị lớn 50S.</p>" },
+    { "id": 19, "label": "4. Thể Nhân (Nucleoid)", "level": 3, "group": "structure", "tooltip": "💡 1 NST ADN vòng kép", "detail": "<h3>🧬 Thể Nhân</h3><p>Chứa 1 nhiễm sắc thể ADN vòng kép, đơn bội.</p>" },
+
+    { "id": 20, "label": "Vi khuẩn Gram Dương (+)", "level": 4, "group": "structure", "tooltip": "💡 Peptidoglycan dày ~25nm", "detail": "<h3>🟣 Gram Dương (+)</h3><p>Lớp Peptidoglycan rất dày (~25nm), chứa Acid Teichoic & Lipoteichoic.</p>" },
+    { "id": 21, "label": "Vi khuẩn Gram Âm (-)", "level": 4, "group": "structure", "tooltip": "💡 Peptidoglycan mỏng + Màng ngoài OM", "detail": "<h3>🔴 Gram Âm (-)</h3><p>Peptidoglycan mỏng (~3nm), có khoảng Periplasma và Màng ngoài OM chứa LPS.</p>" },
+    { "id": 22, "label": "Ngoại Lệ Cấu Trúc Thành", "level": 4, "group": "structure", "tooltip": "💡 Mycoplasma, Mycobacterium...", "detail": "<h3>⚠️ Ngoại lệ cấu trúc</h3><ul><li><b>Mycoplasma / Ureaplasma:</b> KHÔNG có vách.</li><li><b>Mycobacterium / Nocardia:</b> Chứa Acid Mycolic + Arabinogalactan + LAM.</li><li><b>Vi khuẩn dạng L:</b> Protoplast/Spheroplast phân chia được.</li></ul>" },
+
+    { "id": 29, "label": "Enzyme Transpeptidase (PBP)", "level": 4, "group": "mechanism", "tooltip": "💡 Đích gắn Beta-lactam", "detail": "<h3>🛠️ Enzyme PBP</h3><p>Chịu trách nhiệm tạo liên kết chéo củng cố vách peptidoglycan.</p>" },
+    { "id": 30, "label": "KS Beta-lactam", "level": 1, "group": "drug", "tooltip": "💡 Penicillin, Cephalosporin...", "detail": "<h3>💊 Kháng sinh Beta-lactam</h3><p>Ức chế không thuận nghịch enzyme PBP -> Làm mất vách tế bào.</p>" },
+    { "id": 31, "label": "KS Glycopeptide (Vancomycin)", "level": 1, "group": "drug", "tooltip": "💡 Khóa đầu D-Ala-D-Ala", "detail": "<h3>💊 Vancomycin</h3><p>Khóa đầu tận D-Ala-D-Ala ngăn cản PBP tổng hợp vách.</p>" },
+    { "id": 32, "label": "Tạo Protoplast -> Ly giải ASTT", "level": 5, "group": "mechanism", "tooltip": "💡 Vi khuẩn vỡ do áp suất thẩm thấu", "detail": "<h3>💥 Ly giải tế bào</h3><p>Mất vách khiến tế bào bị vỡ do áp suất thẩm thấu nội bào lớn.</p>" },
+    { "id": 33, "label": "Kháng tự nhiên Gram (-)", "level": 5, "group": "resistance", "tooltip": "💡 Vancomycin bị cản bởi OM", "detail": "<h3>🛡️ Đề kháng tự nhiên</h3><p>Vancomycin có phân tử cồng kềnh gấp 5-7 lần nên không qua được màng ngoài OM của Gram âm.</p>" },
+
+    { "id": 34, "label": "Màng kép Phospholipid & Colistin", "level": 4, "group": "mechanism", "tooltip": "💡 Đích tác động của Colistin", "detail": "<h3>🧪 Tác động lên Màng</h3><p>Colistin bám Lipid A mồi Gram- gây ly giải màng. Tuy nhiên gây độc tính thần kinh & thận ở người.</p>" },
+    { "id": 35, "label": "Bơm đẩy ngược Efflux Pump", "level": 4, "group": "resistance", "tooltip": "💡 Hệ RND MexAB-OprM", "detail": "<h3>🛡️ Bơm đẩy ngược</h3><p>Chủ động bơm kháng sinh ra ngoài (Ví dụ: Hệ MexAB-OprM ở P.aeruginosa).</p>" },
+
+    { "id": 40, "label": "Ức chế Tiểu đơn vị 50S", "level": 4, "group": "drug", "tooltip": "💡 Macrolide, Clindamycin, Chloramphenicol", "detail": "<h3>💊 Kháng sinh gắn 50S</h3><p>Macrolide, Clindamycin, Chloramphenicol -> Ức chế dịch mã thuận nghịch (Kìm khuẩn).</p>" },
+    { "id": 41, "label": "Ức chế Tiểu đơn vị 30S", "level": 4, "group": "drug", "tooltip": "💡 Aminoglycoside, Tetracycline", "detail": "<h3>💊 Kháng sinh gắn 30S</h3><p>Aminoglycoside liên kết không thuận nghịch gây đọc sai mã -> Diệt khuẩn. Tetracycline gây kìm khuẩn.</p>" },
+
+    { "id": 45, "label": "Ức chế DNA Gyrase (Quinolones)", "level": 4, "group": "drug", "tooltip": "💡 Fluoroquinolones", "detail": "<h3>💊 Quinolones</h3><p>Đóng băng trạng thái cắt của GyrA/ParC -> Đứt gãy DNA -> Chết tế bào.</p>" },
+    { "id": 46, "label": "Ức chế Acid Folic & RNA Poly", "level": 4, "group": "drug", "tooltip": "💡 Cotrimoxazole & Rifampin", "detail": "<h3>💊 Cotrimoxazole & Rifampin</h3><ul><li><b>Cotrimoxazole:</b> Ức chế 2 chặng tổng hợp Acid Folic.</li><li><b>Rifampin:</b> Gắn chọn lọc RNA Polymerase.</li></ul>" },
+
+    { "id": 53, "label": "Nang (Capsule) & Glycocalyx", "level": 3, "group": "structure", "tooltip": "💡 Vỏ né thực bào & Biofilm", "detail": "<h3>🛡️ Nang & Biofilm</h3><p>Nang né thực bào (Kháng nguyên K). Glycocalyx giúp bám dính tạo màng Biofilm (S.mutans gây sâu răng, VAP thở máy).</p>" },
+    { "id": 54, "label": "Tiêm mao & Pili", "level": 3, "group": "structure", "tooltip": "💡 Bơi & Tiếp hợp Plasmid", "detail": "<h3>🏊 Tiêm mao & Pili</h3><p>Tiêm mao (Kháng nguyên H) giúp bơi ngược dòng. Sex pilus truyền Plasmid tiếp hợp.</p>" },
+    { "id": 55, "label": "Plasmid & Bào tử (Endospore)", "level": 3, "group": "structure", "tooltip": "💡 Gen đề kháng & Sinh tồn cực hạn", "detail": "<h3>🔥 Plasmid & Bào tử</h3><p>Plasmid R mang gen kháng thuốc. Bào tử chứa Canxi-Dipicolinic acid chịu nhiệt cực hạn (Diệt bằng hấp ẩm 121°C/20ph).</p>" },
+
+    { "id": 66, "label": "Dịch tễ Bạch hầu 2016-2020", "level": 3, "group": "target", "tooltip": "💡 Đỉnh dịch 198 ca Tây Nguyên", "detail": "<h3>📊 Dịch tễ học</h3><p>Đỉnh dịch 2020 ghi nhận 198 ca dương tính (138 ca bệnh + 60 người lành mang trùng), 4 ca tử vong tại Tây Nguyên.</p>" },
+    { "id": 67, "label": "Phác đồ Điều trị Bạch hầu", "level": 3, "group": "target", "tooltip": "💡 Penicillin G/Macrolide + SAD", "detail": "<h3>🏥 Phác đồ điều trị</h3><p>Dùng Penicillin G hoặc Macrolide diệt khuẩn + Huyết thanh kháng độc tố SAD trung hòa độc tố khẩn cấp.</p>" },
+    { "id": 68, "label": "Dự phòng Bạch hầu", "level": 3, "group": "target", "tooltip": "💡 Tiêm Benzathine Penicillin & Vaccine", "detail": "<h3>🛡️ Phác đồ dự phòng</h3><p>Người tiếp xúc: Benzathine penicillin G IM / Erythromycin. Vaccine: DTaP (Trẻ nhỏ), Tdap/Td (Thiếu niên, Người lớn).</p>" }
+  ],
+  "edges": [
+    { "from": 1, "to": 2, "label": "Hình thái", "isMain": true },
+    { "from": 1, "to": 3, "label": "Bắt buộc", "isMain": true },
+    { "from": 1, "to": 4, "label": "Phụ trợ", "isMain": true },
+    { "from": 1, "to": 5, "label": "Lâm sàng", "isMain": true },
+
+    { "from": 2, "to": 6, "label": "Phân loại", "isMain": true },
+    { "from": 6, "to": 7, "label": "Cầu khuẩn", "isMain": true },
+    { "from": 6, "to": 8, "label": "Trực khuẩn", "isMain": true },
+    { "from": 6, "to": 9, "label": "Xoắn khuẩn", "isMain": true },
+
+    { "from": 3, "to": 16, "label": "Thành tế bào", "isMain": true },
+    { "from": 3, "to": 17, "label": "Màng sinh chất", "isMain": true },
+    { "from": 3, "to": 18, "label": "Ribosome", "isMain": true },
+    { "from": 3, "to": 19, "label": "Thể nhân", "isMain": true },
+
+    { "from": 16, "to": 20, "label": "Vách dày", "isMain": true },
+    { "from": 16, "to": 21, "label": "Vách mỏng", "isMain": true },
+    { "from": 16, "to": 22, "label": "Biến thể", "isMain": true },
+
+    { "from": 30, "to": 29, "label": "Ức chế PBP", "isMain": true },
+    { "from": 31, "to": 29, "label": "Khóa D-Ala-D-Ala", "isMain": true },
+    { "from": 29, "to": 32, "label": "Thủy phân vách", "isMain": true },
+    { "from": 31, "to": 33, "label": "Bị OM chặn", "isMain": false, "isImportant": true },
+
+    { "from": 17, "to": 34, "label": "Tác động màng", "isMain": true },
+    { "from": 17, "to": 35, "label": "Đề kháng màng", "isMain": true },
+
+    { "from": 18, "to": 40, "label": "Diệt/Kìm khuẩn 50S", "isMain": true },
+    { "from": 18, "to": 41, "label": "Diệt/Kìm khuẩn 30S", "isMain": true },
+
+    { "from": 19, "to": 45, "label": "Đứt gãy ADN", "isMain": true },
+    { "from": 19, "to": 46, "label": "Ức chế nhân", "isMain": true },
+
+    { "from": 4, "to": 53, "label": "Bám & Trốn", "isMain": true },
+    { "from": 4, "to": 54, "label": "Di chuyển", "isMain": true },
+    { "from": 4, "to": 55, "label": "Sinh tồn", "isMain": true },
+
+    { "from": 5, "to": 66, "label": "Dịch tễ", "isMain": true },
+    { "from": 5, "to": 67, "label": "Điều trị", "isMain": true },
+    { "from": 5, "to": 68, "label": "Dự phòng", "isMain": true }
+  ]
+}
