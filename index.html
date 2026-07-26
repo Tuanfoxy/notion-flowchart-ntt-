@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>iCanStudy Advanced Interactive Engine</title>
   <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   
@@ -23,7 +23,7 @@
       --accent-color: #529cca;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    html, body { width: 100%; height: 100%; background-color: var(--bg-color); color: var(--text-color); overflow: hidden; }
+    html, body { width: 100%; height: 100%; background-color: var(--bg-color); color: var(--text-color); overflow: hidden; touch-action: none; }
 
     /* TOOLBAR */
     #toolbar {
@@ -43,13 +43,38 @@
     }
     .btn:hover { background: var(--accent-color); color: white; border-color: var(--accent-color); }
     .btn.active { background: var(--accent-color); color: white; }
+    
+    /* NÚT GHI CHÚ SMARTER */
+    .btn-note {
+      opacity: 0.4;
+      pointer-events: none;
+      background: var(--bg-color);
+      color: var(--text-color);
+      border-color: var(--border-color);
+    }
+    .btn-note.ready {
+      opacity: 1;
+      pointer-events: auto;
+      background: #ff9800 !important;
+      color: white !important;
+      border-color: #f57c00 !important;
+      animation: pulse-glow 1.5s infinite;
+    }
+
+    @keyframes pulse-glow {
+      0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); }
+      70% { box-shadow: 0 0 0 7px rgba(255, 152, 0, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
+    }
+
     #search-input {
       padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border-color);
-      background: var(--bg-color); color: var(--text-color); font-size: 12px; outline: none; width: 140px;
+      background: var(--bg-color); color: var(--text-color); font-size: 12px; outline: none; width: 110px;
     }
 
     #main-container { width: 100%; height: calc(100vh - 50px); min-height: 550px; position: relative; display: flex; }
-    #network { width: 100%; height: 100%; min-height: 550px; background-color: var(--bg-color); }
+    #network { width: 100%; height: 100%; min-height: 550px; background-color: var(--bg-color); cursor: grab; }
+    #network:active { cursor: grabbing; }
 
     /* DRAWER */
     #drawer {
@@ -71,11 +96,12 @@
 
   <div id="toolbar">
     <button class="btn active" id="btn-mode" onclick="cycleMode()">🌐 Dạng 2: Hệ thống</button>
+    <button class="btn btn-note" id="btn-note" onclick="toggleDrawerForSelected()">📝 Xem Ghi Chú</button>
     <button class="btn" id="btn-recall" onclick="toggleActiveRecall()">❓ Active Recall</button>
     <input type="text" id="search-input" placeholder="🔍 Tìm nút..." oninput="handleSearch(this.value)">
     <button class="btn" onclick="resetView()">🔄 Reset</button>
     <button class="btn" onclick="toggleDarkMode()">🌙/☀️</button>
-    <span class="status-guide" id="guide-text">Mặc định: Chỉ hiện đường chính | Click đúp: Mở đường phụ</span>
+    <span class="status-guide" id="guide-text">💻 Chuột phải / 📱 2 Ngón tay để xoay 360°</span>
   </div>
 
   <div id="main-container">
@@ -92,33 +118,35 @@
     let edgesDataSet = new vis.DataSet();
     
     // TRẠNG THÁI HỆ THỐNG
-    let currentMode = 2; // MẶC ĐỊNH DẠNG 2 (HỆ THỐNG THÔNG TIN)
+    let currentMode = 2; 
     let isActiveRecall = false;
     let lockedNodeId = null;
+    let selectedNodeData = null;
     let activeSecondaryNodeId = null;
     let clickTimeout = null;
 
-    // DỮ LIỆU MẪU CÓ CẤU TRÚC MAIN vs SECONDARY
+    // QUẢN LÝ XOAY 360° BẰNG CHUỘT & ĐIỆN THOẠI (TOUCH)
+    let basePositions = null;
+    let centerPos = { x: 0, y: 0 };
+    let isRotating = false;
+    let startAngle = 0;
+    let currentRotation = 0;
+
     const rawData = {
       "nodes": [
-        { "id": 1, "label": "Vi khuẩn Gram-âm", "level": 1, "group": "target", "tooltip": "💡 Nút chính Bậc 1", "detail": "<h3>📌 Vi khuẩn Gram-âm</h3><p>Có vách tế bào kép đặc trưng.</p>" },
-        { "id": 2, "label": "Kênh Porin", "level": 2, "group": "structure", "tooltip": "💡 Cửa ngõ qua màng", "detail": "<h3>🚪 Kênh Porin</h3><p>Kênh vận chuyển chất thân nước.</p>" },
-        { "id": 3, "label": "Vách Peptidoglycan", "level": 2, "group": "structure", "tooltip": "💡 Bổ trợ vách", "detail": "<h3>🧱 Vách Peptidoglycan</h3><p>Đích tác dụng diệt khuẩn.</p>" },
-        { "id": 4, "label": "KS Beta-lactam", "level": 1, "group": "drug", "tooltip": "💡 Nút chính Bậc 1", "detail": "<h3>💊 Kháng sinh Beta-lactam</h3><p>Nhóm kháng sinh diệt khuẩn mạnh.</p>" },
-        { "id": 5, "label": "Ức chế Enzyme PBP", "level": 2, "group": "mechanism", "tooltip": "💡 Cơ chế tác dụng", "detail": "<h3>🛠️ Enzyme PBP</h3><p>Ngăn cản tổng hợp peptidoglycan.</p>" },
-        { "id": 6, "label": "Tiết Beta-lactamase", "level": 2, "group": "resistance", "tooltip": "💡 Cơ chế đề kháng", "detail": "<h3>✂️ Beta-lactamase</h3><p>Thủy phân vòng beta-lactam.</p>" }
+        { "id": 1, "label": "Vi khuẩn Gram-âm", "level": 1, "group": "target", "tooltip": "💡 Nút chính Bậc 1", "detail": "<h3>📌 Vi khuẩn Gram-âm</h3><p>Có vách tế bào kép đặc trưng gồm màng ngoài và peptidoglycan.</p>" },
+        { "id": 2, "label": "Kênh Porin", "level": 2, "group": "structure", "tooltip": "💡 Cửa ngõ qua màng", "detail": "<h3>🚪 Kênh Porin</h3><p>Kênh vận chuyển chất thân nước đi qua màng ngoài.</p>" },
+        { "id": 3, "label": "Vách Peptidoglycan", "level": 2, "group": "structure", "tooltip": "💡 Bổ trợ vách", "detail": "<h3>🧱 Vách Peptidoglycan</h3><p>Đích tác dụng của nhiều kháng sinh diệt khuẩn.</p>" },
+        { "id": 4, "label": "KS Beta-lactam", "level": 1, "group": "drug", "tooltip": "💡 Nút chính Bậc 1", "detail": "<h3>💊 Kháng sinh Beta-lactam</h3><p>Nhóm kháng sinh diệt khuẩn mạnh bằng cách ức chế vách.</p>" },
+        { "id": 5, "label": "Ức chế Enzyme PBP", "level": 2, "group": "mechanism", "tooltip": "💡 Cơ chế tác dụng", "detail": "<h3>🛠️ Enzyme PBP</h3><p>PBP bị gắn chặt làm ngưng tổng hợp peptidoglycan.</p>" },
+        { "id": 6, "label": "Tiết Beta-lactamase", "level": 2, "group": "resistance", "tooltip": "💡 Cơ chế đề kháng", "detail": "<h3>✂️ Beta-lactamase</h3><p>Thủy phân vòng beta-lactam khiến kháng sinh mất tác dụng.</p>" }
       ],
       "edges": [
-        // LUỒNG CHÍNH (isMain: true) -> Nét liền đậm, có mũi tên
         { "id": "e1-2", "from": 1, "to": 2, "label": "Chứa", "isMain": true },
         { "id": "e1-3", "from": 1, "to": 3, "label": "Bao bọc", "isMain": true },
         { "id": "e4-5", "from": 4, "to": 5, "label": "Cơ chế chính", "isMain": true },
         { "id": "e5-3", "from": 5, "to": 3, "label": "Phá hủy vách", "isMain": true },
-        
-        // LUỒNG PHỤ (isMain: false) -> Nét đứt mảnh, KHÔNG mũi tên
         { "id": "e4-2", "from": 4, "to": 2, "label": "Thấm qua", "isMain": false },
-        
-        // LIÊN KẾT CHÉO QUAN TRỌNG (isMain: false, isImportant: true) -> Coi như đường chính
         { "id": "e6-4", "from": 6, "to": 4, "label": "Đề kháng mạnh", "isMain": false, "isImportant": true }
       ]
     };
@@ -132,7 +160,6 @@
     };
 
     function initNetwork() {
-      // 1. PROCESS NODES
       const processedNodes = rawData.nodes.map(node => {
         const isLevel1 = node.level === 1;
         const colorConfig = groupColors[node.group] || { background: '#ffffff', border: '#cccccc', fontColor: '#2f3437' };
@@ -152,7 +179,6 @@
         };
       });
 
-      // 2. PROCESS EDGES
       const processedEdges = rawData.edges.map(edge => {
         const isMainOrImportant = edge.isMain || edge.isImportant;
         return {
@@ -166,7 +192,13 @@
           dashes: isMainOrImportant ? false : [5, 5],
           arrows: isMainOrImportant ? 'to' : '',
           color: { color: isMainOrImportant ? '#2eaadc' : '#999999', opacity: 1 },
-          font: { size: 10, align: 'middle' },
+          font: { 
+            size: 11, 
+            align: 'horizontal', 
+            background: '#ffffff',
+            strokeWidth: 2,
+            strokeColor: '#ffffff'
+          },
           smooth: { type: 'cubicBezier', forceDirection: 'horizontal' }
         };
       });
@@ -181,23 +213,22 @@
         layout: {
           hierarchical: { enabled: true, direction: 'LR', sortMethod: 'directed', nodeSpacing: 160, levelSeparation: 220 }
         },
-        physics: { enabled: false }, // Tắt hoàn toàn vật lý -> Đứng yên tuyệt đối
-        interaction: { hover: false } // ĐÃ TẮT HOÀN TOÀN HOVER TẢI DƯ THỪA
+        physics: { enabled: false },
+        interaction: { hover: false }
       };
 
       network = new vis.Network(container, data, options);
 
-      // Áp dụng dạng mặc định khi mới mở (Dạng 2)
-      applyModeRules();
+      setTimeout(storeBasePositions, 200);
 
-      // BẮT SỰ KIỆN CLICK ĐƠN & DOUBLE CLICK
+      applyModeRules();
+      setupInteractiveRotation();
+
       network.on("click", function (params) {
         if (clickTimeout) clearTimeout(clickTimeout);
-
         clickTimeout = setTimeout(() => {
           if (params.nodes.length > 0) {
-            const nodeId = params.nodes[0];
-            handleSingleClick(nodeId);
+            handleSingleClick(params.nodes[0]);
           } else {
             handleBackgroundClick();
           }
@@ -207,23 +238,110 @@
       network.on("doubleClick", function (params) {
         if (clickTimeout) clearTimeout(clickTimeout);
         if (params.nodes.length > 0) {
-          const nodeId = params.nodes[0];
-          handleDoubleClick(nodeId);
+          handleDoubleClick(params.nodes[0]);
         }
       });
     }
 
-    // DIEÙ KHIỂN DẠNG HIỂN THỊ
+    function storeBasePositions() {
+      const positions = network.getPositions();
+      basePositions = {};
+      let sumX = 0, sumY = 0, count = 0;
+      for (let id in positions) {
+        basePositions[id] = { x: positions[id].x, y: positions[id].y };
+        sumX += positions[id].x;
+        sumY += positions[id].y;
+        count++;
+      }
+      if (count > 0) {
+        centerPos = { x: sumX / count, y: sumY / count };
+      }
+      network.setOptions({ layout: { hierarchical: { enabled: false } } });
+    }
+
+    // LẬP TRÌNH XOAY ĐA NỀN TẢNG (MÁY TÍNH & ĐIỆN THOẠI CẢM ỨNG)
+    function setupInteractiveRotation() {
+      const container = document.getElementById('network');
+      container.addEventListener('contextmenu', e => e.preventDefault());
+
+      // 1. DÀNH CHO MÁY TÍNH (CHUỘT PHẢI / SHIFT)
+      container.addEventListener('mousedown', (e) => {
+        if (e.button === 2 || (e.button === 0 && e.shiftKey)) {
+          isRotating = true;
+          const rect = container.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left - rect.width / 2;
+          const mouseY = e.clientY - rect.top - rect.height / 2;
+          startAngle = Math.atan2(mouseY, mouseX) - currentRotation;
+        }
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isRotating || e.touches) return;
+        const rect = container.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left - rect.width / 2;
+        const mouseY = e.clientY - rect.top - rect.height / 2;
+        const angle = Math.atan2(mouseY, mouseX);
+        currentRotation = angle - startAngle;
+        applyRotation(currentRotation);
+      });
+
+      window.addEventListener('mouseup', () => { isRotating = false; });
+
+      // 2. DÀNH CHO ĐIỆN THOẠI / TABLET (CỬ CHỈ 2 NGÓN TAY XOAY)
+      container.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+          isRotating = true;
+          const p1 = e.touches[0];
+          const p2 = e.touches[1];
+          startAngle = Math.atan2(p2.clientY - p1.clientY, p2.clientX - p1.clientX) - currentRotation;
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (isRotating && e.touches.length === 2) {
+          const p1 = e.touches[0];
+          const p2 = e.touches[1];
+          const angle = Math.atan2(p2.clientY - p1.clientY, p2.clientX - p1.clientX);
+          currentRotation = angle - startAngle;
+          applyRotation(currentRotation);
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) {
+          isRotating = false;
+        }
+      });
+    }
+
+    function applyRotation(angle) {
+      if (!basePositions) return;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      
+      const updates = [];
+      for (let id in basePositions) {
+        const pos = basePositions[id];
+        const dx = pos.x - centerPos.x;
+        const dy = pos.y - centerPos.y;
+        
+        const newX = centerPos.x + (dx * cos - dy * sin);
+        const newY = centerPos.y + (dx * sin + dy * cos);
+        
+        updates.push({ id: Number(id), x: newX, y: newY });
+      }
+      nodesDataSet.update(updates);
+    }
+
     function applyModeRules() {
       lockedNodeId = null;
       activeSecondaryNodeId = null;
+      deselectNodeUI();
       resetNodesOpacity();
 
       if (currentMode === 1) {
-        // DẠNG 1: BẢN ĐỒ THÔNG TIN -> Ban đầu ẨN 100% liên kết
         hideAllEdges();
       } else if (currentMode === 2) {
-        // DẠNG 2: HỆ THỐNG THÔNG TIN -> Chỉ hiện liên kết CHÍNH
         showOnlyMainEdges();
       }
     }
@@ -246,30 +364,46 @@
       applyModeRules();
     }
 
-    // LOGIC SINGLE CLICK
     function handleSingleClick(nodeId) {
-      const nodeData = nodesDataSet.get(nodeId);
-      openDrawer(nodeData.detail);
+      selectedNodeData = nodesDataSet.get(nodeId);
+
+      const btnNote = document.getElementById('btn-note');
+      btnNote.classList.add('ready');
+      btnNote.innerText = `📝 Ghi chú: ${selectedNodeData.originalLabel}`;
 
       if (currentMode === 1) {
-        // DẠNG 1: Click 1 cái -> Hiện đường đi RÕ NÉT & KHÓA LẠI
         lockedNodeId = nodeId;
         showConnectionsForNode(nodeId, 1.0, true);
       } else if (currentMode === 2) {
-        // DẠNG 2: Click 1 cái -> Highlight luồng chính của nút đó
         highlightPath(nodeId);
       }
     }
 
-    // LOGIC DOUBLE CLICK
+    function toggleDrawerForSelected() {
+      if (!selectedNodeData) return;
+      const drawer = document.getElementById('drawer');
+      if (drawer.classList.contains('open')) {
+        closeDrawer();
+      } else {
+        openDrawer(selectedNodeData.detail);
+      }
+    }
+
+    function deselectNodeUI() {
+      selectedNodeData = null;
+      const btnNote = document.getElementById('btn-note');
+      btnNote.classList.remove('ready');
+      btnNote.innerText = "📝 Xem Ghi Chú";
+    }
+
     function handleDoubleClick(nodeId) {
       if (currentMode === 1) {
-        // DẠNG 1: Click đúp -> HỦY KHÓA ĐƯỜNG ĐI (Thu hồi về dạng ẩn hết)
         lockedNodeId = null;
         hideAllEdges();
         resetNodesOpacity();
+        deselectNodeUI();
+        closeDrawer();
       } else if (currentMode === 2) {
-        // DẠNG 2: Click đúp -> BẬT/TẮT LIÊN KẾT CHÉO PHỤ CỦA NÚT NÀY
         if (activeSecondaryNodeId === nodeId) {
           activeSecondaryNodeId = null;
           showOnlyMainEdges();
@@ -282,10 +416,10 @@
 
     function handleBackgroundClick() {
       closeDrawer();
+      deselectNodeUI();
       applyModeRules();
     }
 
-    // ẨN / HIỆN ĐƯỜNG VẼ
     function hideAllEdges() {
       const updates = edgesDataSet.get().map(e => ({ id: e.id, hidden: true }));
       edgesDataSet.update(updates);
@@ -357,7 +491,6 @@
       nodesDataSet.update(updates);
     }
 
-    // TÍNH NĂNG PHỤ TRỢ
     function toggleActiveRecall() {
       isActiveRecall = !isActiveRecall;
       document.getElementById('btn-recall').classList.toggle('active', isActiveRecall);
@@ -383,7 +516,14 @@
       }
     }
 
-    function resetView() { network.fit({ animation: { duration: 400 } }); applyModeRules(); closeDrawer(); }
+    function resetView() { 
+      currentRotation = 0; 
+      applyRotation(0); 
+      network.fit({ animation: { duration: 300 } }); 
+      applyModeRules(); 
+      closeDrawer(); 
+    }
+    
     function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 
     window.onload = initNetwork;
