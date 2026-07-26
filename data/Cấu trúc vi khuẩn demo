@@ -1,101 +1,57 @@
 {
   "nodes": [
-    { "id": 1, "label": "CẤU TRÚC VÀ HÌNH THÁI HỌC VI KHUẨN", "level": 1, "group": "target", "tooltip": "💡 Anchor: Trụ cột quyết định hình thái, phân loại, độc lực & đề kháng", "detail": "<h3>📌 ANCHOR CHÍNH</h3><p>Khác biệt cấu trúc Thành/Màng & Bộ phận bổ trợ quyết định hình thái, phân loại, độc lực và đề kháng lâm sàng.</p>" },
-    
-    { "id": 2, "label": "I. Hình Thái Học Tế Bào", "level": 2, "group": "structure", "tooltip": "💡 Hình dạng + Cách sắp xếp", "detail": "<h3>I. Hình thái học tế bào</h3><p>Hình thái = Hình dạng + Cách sắp xếp. Dùng định danh kiểu hình theo Bergey's Manual.</p>" },
-    { "id": 3, "label": "II. Thành Phần Bắt Buộc", "level": 2, "group": "structure", "tooltip": "💡 Sự sống còn & Đích tác động kháng sinh", "detail": "<h3>II. Thành phần bắt buộc</h3><p>Gồm 4 bộ phận thiết yếu: Thành, Màng, Ribosome và Thể nhân. Thiếu sót dẫn đến ly giải tế bào.</p>" },
-    { "id": 4, "label": "III. Thành Phần Không Bắt Buộc", "level": 2, "group": "structure", "tooltip": "💡 Thích nghi, Độc lực & Chuyển gen ngang", "detail": "<h3>III. Thành phần không bắt buộc</h3><p>Giúp vi khuẩn tăng lực độc, bám dính, né thực bào và truyền gen kháng thuốc.</p>" },
-    { "id": 5, "label": "IV. Case Study Lâm Sàng", "level": 2, "group": "target", "tooltip": "💡 Dịch Bạch hầu Việt Nam (2016-2020)", "detail": "<h3>IV. Case Study Lâm sàng: Dịch Bạch hầu</h3><p>Phân tích dịch tễ, phác đồ điều trị và dự phòng dịch Bạch hầu tại Việt Nam.</p>" },
+    { "id": 1, "label": "CÔNG NGHỆ SẢN XUẤT & CÔNG NGHỆ NGHIỀN", "level": 1, "group": "target", "tooltip": "💡 Anchor: Tổng quan quy trình công nghệ & Kỹ thuật giảm kích thước tiểu phân", "detail": "<h3>📌 CÔNG NGHỆ DƯỢC PHẨM</h3><p>Nghiên cứu quy trình chuyển hóa từ nguyên liệu ban đầu thành dạng chế phẩm thương mại, tập trung vào kỹ thuật kiểm soát kích thước tiểu phân bằng công nghệ nghiền.</p>" },
 
-    { "id": 6, "label": "Cầu khuẩn (Cocci)", "level": 3, "group": "structure", "tooltip": "💡 Cầu, Bầu dục, Lõm 1 cạnh", "detail": "<h3>🔴 Cầu khuẩn (Cocci)</h3><ul><li><b>Hình dạng:</b> Cầu (<i>Staphylococcus</i>), Bầu dục (<i>S. faecalis</i>), Lõm một cạnh (<i>Neisseria</i>).</li><li><b>Sắp xếp:</b> Riêng lẻ, Cặp đôi (Diplococci), Chuỗi (Streptococci), Cụm 4 (Tetrads), Khối 8 (Sarcina), Tụ chùm (Staphylococci).</li></ul>" },
-    { "id": 7, "label": "Trực khuẩn (Bacilli)", "level": 3, "group": "structure", "tooltip": "💡 Que dài, Que ngắn", "detail": "<h3>🟢 Trực khuẩn (Bacilli)</h3><ul><li><b>Hình dạng:</b> Que dài ~20µm (<i>B. subtilis</i>), Que ngắn ~0.5µm (Coccobacilli).</li><li><b>Sắp xếp:</b> Riêng rẽ, Cặp đôi (Diplobacilli), Chuỗi dài (Streptobacilli), Hàng rào/Chữ V (<i>Corynebacterium</i>).</li></ul>" },
-    { "id": 8, "label": "Xoắn khuẩn (Spiral)", "level": 3, "group": "structure", "tooltip": "💡 Phẩy, Xoắn vừa, Spirochetes", "detail": "<h3>🌊 Xoắn khuẩn (Spiral)</h3><ul><li><b>Hình dạng:</b> Dấu phẩy (<i>Vibrio</i>), Xoắn vừa (<i>Spirillum</i>), Xoắn ốc (<i>Spirochetes</i>).</li><li><b>Sắp xếp:</b> Luôn luôn sắp xếp RIÊNG LẺ.</li></ul>" },
+    { "id": 2, "label": "I. Lưu Đồ Sản Xuất (Flow Chart)", "level": 2, "group": "structure", "tooltip": "💡 Trình tự các quá trình công nghệ", "detail": "<h3>📜 Lưu đồ sản xuất (Flow chart)</h3><p>Biểu diễn trình tự thời gian các công đoạn sản xuất. Yêu cầu thống nhất 100% quy chuẩn biểu diễn (Châu Âu: Ô chữ nhật = Bán thành phẩm; Ấn Độ: Ô chữ nhật = Hành động).</p>" },
+    { "id": 3, "label": "II. Động Học Hòa Tan & Đường Dùng", "level": 2, "group": "mechanism", "tooltip": "💡 Phương trình Noyes-Whitney & Kích thước hạt", "detail": "<h3>🧬 Động học hòa tan & Hấp thu</h3><p>Nghiền làm tăng diện tích bề mặt tiếp xúc (S) theo hàm số mũ, từ đó thúc đẩy tốc độ hòa tan (dC/dt) theo phương trình Noyes-Whitney.</p>" },
+    { "id": 4, "label": "III. Động Học & Cơ Chế Nghiền", "level": 2, "group": "mechanism", "tooltip": "💡 4 Giai đoạn biến dạng & 4 Cơ chế vật lý", "detail": "<h3>⚙️ Động học & Cơ chế nghiền</h3><p>Nghiền diễn ra qua 4 giai đoạn biến dạng. Lực nghiền phụ thuộc vào Phương và Thời gian tác dụng để tạo ra 4 cơ chế vật lý cơ bản.</p>" },
+    { "id": 5, "label": "IV. Hệ Thống Thiết Bị Nghiền", "level": 2, "group": "application", "tooltip": "💡 Dụng cụ nhỏ & Thiết bị quy mô công nghiệp", "detail": "<h3>🛠️ Thiết bị nghiền công nghiệp</h3><p>Lựa chọn thiết bị dựa trên tính chất vật liệu (độ cứng, tính giòn, độ dẻo) và độ nhạy cảm với nhiệt độ của hoạt chất.</p>" },
 
-    { "id": 9, "label": "1. Thành Tế Bào (Cell Wall)", "level": 3, "group": "structure", "tooltip": "💡 Khung Peptidoglycan (NAG-NAM)", "detail": "<h3>🧱 Thành Tế Bào</h3><p>Cấu tạo chủ yếu từ Peptidoglycan. Giúp giữ vững hình dạng và chống chịu áp suất thẩm thấu.</p>" },
-    { "id": 10, "label": "Gram Dương (+)", "level": 4, "group": "structure", "tooltip": "💡 Peptidoglycan dày ~25nm + Acid Teichoic", "detail": "<h3>🟣 Gram Dương (+)</h3><p>Lớp Peptidoglycan rất dày (~25nm), bền vững vật lý. Chứa Acid Teichoic & Lipoteichoic kích hoạt miễn dịch.</p>" },
-    { "id": 11, "label": "Gram Âm (-)", "level": 4, "group": "structure", "tooltip": "💡 Peptidoglycan mỏng ~3nm + Màng ngoài OM", "detail": "<h3>🔴 Gram Âm (-)</h3><p>Peptidoglycan mỏng (~3nm). Có khoảng Periplasma và Màng ngoài OM chứa Lipopolysaccharide (LPS).</p>" },
-    { "id": 12, "label": "Ngoại Lệ Cấu Trúc Thành", "level": 4, "group": "resistance", "tooltip": "💡 Mycoplasma, Mycobacterium...", "detail": "<h3>⚠️ Ngoại lệ cấu trúc thành</h3><ul><li><b>Mycoplasma / Ureaplasma:</b> KHÔNG có vách peptidoglycan.</li><li><b>Mycobacterium / Nocardia:</b> Chứa Acid Mycolic + Arabinogalactan + LAM.</li><li><b>L-form:</b> Protoplast/Spheroplast còn khả năng phân chia.</li></ul>" },
+    { "id": 6, "label": "Các Bước Tạo Hạt Ướt Viên Nén", "level": 3, "group": "structure", "tooltip": "💡 Quy trình 6 bước chuẩn hóa", "detail": "<h3>🧱 Quy trình xát hạt ướt</h3><ol><li>Cân - Rây - Nghiền nguyên liệu (API + Tá dược)</li><li>Trộn bột khô</li><li>Trộn bột ướt (thêm tá dược dính)</li><li>Xát hạt ướt -> Cốm ướt</li><li>Sấy cốm -> Cốm khô</li><li>Sửa hạt & Trộn hoàn tất -> Dập viên / Đóng nang</li></ol>" },
+    { "id": 7, "label": "Tá Dược Rã Nội vs Rã Ngoại", "level": 4, "group": "mechanism", "tooltip": "💡 Phối hợp ở giai đoạn bột khô vs trộn hoàn tất", "detail": "<h3>🧪 Phân biệt Tá dược rã</h3><ul><li><b>Rã nội:</b> Trộn ngay từ bước bột khô, giúp rã hạt cốm thành bột mịn trong dạ dày.</li><li><b>Rã ngoại:</b> Trộn ở bước hoàn tất, giúp rã viên nén thành các hạt cốm rời.</li></ul>" },
 
-    { "id": 13, "label": "Màng Ngoài OM & LPS", "level": 5, "group": "structure", "tooltip": "💡 Lipid A (Nội độc tố) + Kháng nguyên O", "detail": "<h3>🛡️ Màng ngoài OM & LPS</h3><ul><li><b>Lipid A:</b> Nội độc tố Gram âm, gắn TLR4 gây sốc nhiễm khuẩn và bão cytokine.</li><li><b>Polysaccharide O:</b> Mang tính kháng nguyên bề mặt đặc trưng dùng định danh dịch tễ.</li></ul>" },
-    { "id": 14, "label": "Kênh Porin Xuyên Màng", "level": 5, "group": "structure", "tooltip": "💡 Cửa ngõ vận chuyển chất thân nước", "detail": "<h3>🚪 Kênh Porin</h3><p>Cho phép chất thân nước nhỏ và kháng sinh thấm qua. Vi khuẩn có thể biến đổi Porin để đề kháng.</p>" },
+    { "id": 8, "label": "Phương Trình Noyes-Whitney", "level": 3, "group": "mechanism", "tooltip": "💡 dC/dt = (D * S / h) * (Cs - Ct)", "detail": "<h3>📐 Phương trình Noyes-Whitney</h3><p><b>dC/dt = (D × S / h) × (Cs - Ct)</b></p><p>Độ tan (Cs) là đại lượng cố định. Tốc độ hòa tan (dC/dt) phụ thuộc trực tiếp vào Diện tích bề mặt tiếp xúc (S).</p>" },
+    { "id": 9, "label": "Diện Tích Bề Mặt Tiếp Xúc (S)", "level": 4, "group": "structure", "tooltip": "💡 Tăng vọt theo hàm số mũ khi giảm kích thước", "detail": "<h3>📐 Tăng diện tích bề mặt (S)</h3><p>Khi giảm kích thước hạt đi 3 lần, tổng diện tích bề mặt S' tăng lên 3 lần. Giảm hạt càng nhỏ, S tăng vọt giúp dược chất kém tan hòa tan siêu tốc.</p>" },
+    { "id": 10, "label": "Sinh Khả Dụng & Khởi Phát Tác Dụng", "level": 4, "group": "application", "tooltip": "💡 Rút ngắn thời gian xuất hiện trong máu", "detail": "<h3>⚡ Khởi phát tác dụng điều trị</h3><p>Ví dụ Paracetamol siêu mịn: Viên rã trong 2 phút, hòa tan bão hòa trong 2 phút -> Bắt đầu có tác dụng giảm đau chỉ sau 5-7 phút.</p>" },
+    { "id": 11, "label": "Kích Thước Hạt Theo Đường Dùng", "level": 3, "group": "application", "tooltip": "💡 Hít phế nang < 5µm, Tiêm IV < 2µm, Nhỏ mắt < 3µm", "detail": "<h3>🎯 Kích thước tiểu phân mục tiêu</h3><ul><li><b>Thuốc hít phế nang (Aerosol):</b> 1.0 - 5.0 µm (Tránh va đập cổ họng).</li><li><b>Thuốc nhỏ mắt (Ocular):</b> 0.1 - 3.0 µm (Tránh kích ứng cơ học).</li><li><b>Tiêm tĩnh mạch (IV):</b> 0.1 - 2.0 µm (Tránh tắc mạch).</li></ul>" },
 
-    { "id": 15, "label": "Enzyme Transpeptidase (PBP)", "level": 4, "group": "mechanism", "tooltip": "💡 Xúc tác tạo liên kết chéo Peptidoglycan", "detail": "<h3>🛠️ Enzyme PBP</h3><p>Đích tác động chính của kháng sinh nhóm Beta-lactam và Glycopeptide.</p>" },
-    { "id": 16, "label": "Kháng Sinh Beta-lactam", "level": 3, "group": "drug", "tooltip": "💡 Penicillin, Cephalosporin...", "detail": "<h3>💊 Kháng sinh Beta-lactam</h3><p>Ức chế không thuận nghịch PBP. Rất an toàn, phổ rộng, là lựa chọn đầu tay trên lâm sàng.</p>" },
-    { "id": 17, "label": "Kháng Sinh Glycopeptide (Vancomycin)", "level": 3, "group": "drug", "tooltip": "💡 Cạnh tranh vị trí bám D-Ala-D-Ala", "detail": "<h3>💊 Vancomycin</h3><p>Cạnh tranh vị trí bám D-Ala-D-Ala. Chuyên trị cầu khuẩn Gram(+) kháng thuốc (MRSA).</p>" },
+    { "id": 12, "label": "4 Giai Đoạn Biến Dạng Vật Liệu", "level": 3, "group": "mechanism", "tooltip": "💡 Đàn hồi -> Vết nứt vi mô -> Lan truyền -> Vỡ vụn", "detail": "<h3>🔨 Tiến trình vỡ vụn tiểu phân</h3><ol><li>Biến dạng đàn hồi (Elastic)</li><li>Tạo vết nứt vi mô (Crack formation)</li><li>Lan truyền vết nứt (Crack propagation)</li><li>Vỡ vụn (Fracture/Breakage)</li></ol>" },
+    { "id": 13, "label": "4 Cơ Chế Nghiền Vật Lý", "level": 3, "group": "mechanism", "tooltip": "💡 Va đập, Nén, Chà xát, Cắt-xé", "detail": "<h3>⚙️ 4 Cơ chế nghiền cơ bản</h3><ul><li><b>Va đập (Impact):</b> Lực hướng tâm + Thời gian ngắn.</li><li><b>Nén (Compression):</b> Lực hướng tâm + Thời gian dài.</li><li><b>Chà xát (Attrition):</b> Lực tiếp tuyến + Thời gian dài.</li><li><b>Cắt - xé (Cutting):</b> Lực tiếp tuyến + Thời gian ngắn.</li></ul>" },
+    { "id": 14, "label": "Độ Nghiền (i = D/d) & Động Học", "level": 3, "group": "mechanism", "tooltip": "💡 Kích thước càng mịn, thời gian nghiền kéo dài theo hàm số mũ", "detail": "<h3>📊 Động học quá trình nghiền</h3><p>Phương trình <b>dD/dt = -k * D^n</b>. Hạt càng mịn (nghiền mịn n=2), thời gian cần thiết để giảm một nửa kích thước hạt càng kéo dài dốc đứng.</p>" },
 
-    { "id": 19, "label": "2. Màng Tế Bào Chất", "level": 3, "group": "structure", "tooltip": "💡 Lớp Phospholipid kép + Protein (Không Sterol)", "detail": "<h3>🌊 Màng Tế Bào Chất</h3><p>Kiểm soát trao đổi chất, hô hấp tế bào (ATP) và phân bào. Không chứa Sterol (khác người/nấm).</p>" },
-    { "id": 20, "label": "Kháng Sinh Colistin (Polymyxin)", "level": 3, "group": "drug", "tooltip": "💡 Gắn Lipid A mồi ly giải màng", "detail": "<h3>💊 Colistin</h3><p>Tương tác Lipid A mồi để vào ly giải màng Gram âm. Độc tính cao trên Thận và Thần kinh người.</p>" },
-    { "id": 21, "label": "Bơm Đẩy Ngược (Efflux Pump)", "level": 4, "group": "resistance", "tooltip": "💡 Bơm RND 3 thành phần (MexAB-OprM)", "detail": "<h3>🛡️ Hệ thống Bơm Đẩy Ngược</h3><p>Nằm trên màng, chủ động bơm kháng sinh ra ngoài. Gây ra hiện tượng đa kháng thuốc (MDR) cực kỳ nguy hiểm.</p>" },
-
-    { "id": 22, "label": "3. Ribosome 70S", "level": 3, "group": "structure", "tooltip": "💡 Tiểu đơn vị 30S + 50S", "detail": "<h3>🧬 Ribosome 70S</h3><p>Nhà máy sinh tổng hợp protein gồm 30S (16S rRNA) và 50S.</p>" },
-    { "id": 23, "label": "KS Macrolides & Tetracyclines", "level": 3, "group": "drug", "tooltip": "💡 Ức chế dịch mã 50S/30S (Kìm khuẩn)", "detail": "<h3>💊 Kháng sinh Kìm khuẩn</h3><p>Macrolides, Clindamycin (gắn 50S), Tetracyclines (gắn 30S) -> Ức chế dịch mã thuận nghịch.</p>" },
-    { "id": 24, "label": "Kháng Sinh Aminoglycoside", "level": 3, "group": "drug", "tooltip": "💡 Đọc sai mã Codon 30S -> Diệt khuẩn", "detail": "<h3>💊 Aminoglycoside</h3><p>Gắn 30S làm đọc sai mã codon mRNA -> Tạo protein rác gây rối loạn tế bào -> Diệt khuẩn không đảo nghịch.</p>" },
-
-    { "id": 25, "label": "4. Thể Nhân (Nucleoid)", "level": 3, "group": "structure", "tooltip": "💡 1 NST ADN vòng kép, đơn bội", "detail": "<h3>🧬 Thể Nhân</h3><p>Chứa 1 NST ADN vòng kép, không màng nhân, không có Histone. Diễn ra hiện tượng Transertion đồng thời.</p>" },
-    { "id": 26, "label": "Enzyme DNA Gyrase & Topo IV", "level": 4, "group": "mechanism", "tooltip": "💡 Tháo xoắn và cắt nối ADN", "detail": "<h3>🛠️ DNA Gyrase & Topoisomerase IV</h3><p>Tiểu đơn vị GyrA/ParC chịu trách nhiệm cắt tháo xoắn và nối lại mạch ADN khi sao chép.</p>" },
-    { "id": 27, "label": "Kháng Sinh Quinolone (Fluoroquinolone)", "level": 3, "group": "drug", "tooltip": "💡 Đóng băng trạng thái cắt -> Đứt gãy ADN", "detail": "<h3>💊 Quinolones</h3><p>Ức chế hoạt tính nối của GyrA/ParC -> Đóng băng trạng thái cắt -> Đứt gãy ADN -> Chết tế bào.</p>" },
-    { "id": 28, "label": "Cotrimoxazole (Sulfamethoxazole + Trimethoprim)", "level": 3, "group": "drug", "tooltip": "💡 Ức chế 2 chặng tổng hợp Acid Folic", "detail": "<h3>💊 Cotrimoxazole (Bactrim)</h3><p>Ức chế 2 chặng liên tiếp con đường tổng hợp Acid Folic từ PABA -> Cắt nguồn nguyên liệu ADN.</p>" },
-
-    { "id": 29, "label": "1. Nang (Capsule)", "level": 3, "group": "structure", "tooltip": "💡 Kháng nguyên K, trốn thực bào", "detail": "<h3>🛡️ Nang (Capsule)</h3><p>Lớp Polysaccharide đậm đặc. Ức chế thực bào, làm tăng độc lực mạnh. Chiết xuất sản xuất Vaccine.</p>" },
-    { "id": 30, "label": "2. Glycocalyx & Biofilm", "level": 3, "group": "structure", "tooltip": "💡 Chất keo bám dính & Màng sinh học", "detail": "<h3>🧫 Glycocalyx & Biofilm</h3><p>Polysaccharide lỏng lẻo giúp bám dính mô. Tạo màng Biofilm trên ống dẫn/máy thở gây nhiễm trùng bệnh viện (VAP).</p>" },
-    { "id": 31, "label": "3. Tiêm Mao (Flagella)", "level": 3, "group": "structure", "tooltip": "💡 Kháng nguyên H, động cơ bơi", "detail": "<h3>🏊 Tiêm Mao (Flagella)</h3><p>Giúp vi khuẩn bơi (Runs/Tumbles). *Proteus* nhờ tiêm mao bơi ngược dòng nước tiểu gây UTI.</p>" },
-    { "id": 32, "label": "4. Pili (Fimbriae)", "level": 3, "group": "structure", "tooltip": "💡 Pili bám & Sex Pilus", "detail": "<h3>🔌 Pili</h3><ul><li><b>Pili thường:</b> Giúp bám biểu mô.</li><li><b>Sex pilus:</b> Tạo cầu nối tiếp hợp truyền Plasmid.</li></ul>" },
-    { "id": 33, "label": "5. Plasmid & Gen Đề Kháng", "level": 3, "group": "resistance", "tooltip": "💡 Plasmid R mang gen kháng thuốc", "detail": "<h3>🧬 Plasmid & Transposon</h3><p>ADN ngoài nhân sao chép độc lập. Plasmid R chứa gen kháng thuốc, kết hợp Transposon (gen nhảy) tạo Mega-plasmid.</p>" },
-    { "id": 34, "label": "6. Bào Tử (Endospore)", "level": 3, "group": "resistance", "tooltip": "💡 Dạng sinh tồn Gram(+) cực hạn", "detail": "<h3>🔥 Bào Tử (Endospore)</h3><p>Dạng sinh tồn Gram(+). Chứa Acid Dipicolinic + Ca2+. Kháng nhiệt/UV cực hạn (Hấp 121°C/20ph hoặc Sấy 165-200°C/2h).</p>" },
-
-    { "id": 35, "label": "Dịch Tễ & Lây Truyền", "level": 3, "group": "target", "tooltip": "💡 Tây Nguyên 2020: 198 ca", "detail": "<h3>📊 Dịch tễ Bạch hầu</h3><p>Đỉnh dịch 2020: 198 ca dương tính (138 ca bệnh, 60 người lành mang trùng). Lây qua giọt bắn, khí dung, tiếp xúc.</p>" },
-    { "id": 36, "label": "Phác Đồ Điều Trị Bạch Hầu", "level": 3, "group": "mechanism", "tooltip": "💡 Penicillin G / Macrolide + SAD", "detail": "<h3>🏥 Điều trị Bạch hầu</h3><p>Kháng sinh Penicillin G hoặc Macrolide + Huyết thanh kháng độc tố SAD trung hòa độc tố + Điều trị bảo tồn.</p>" },
-    { "id": 37, "label": "Phác Đồ Dự Phòng Bạch Hầu", "level": 3, "group": "mechanism", "tooltip": "💡 Erythromycin / Benzathine + Vaccine DTaP/Tdap", "detail": "<h3>🛡️ Dự phòng Bạch hầu</h3><p>Người tiếp xúc: Benzathine Penicillin G IM hoặc Erythromycin. Vaccine DTaP (trẻ nhỏ), Tdap (trẻ lớn), Td/Tdap (người lớn).</p>" }
+    { "id": 15, "label": "Cối Chày (Quy Mô Nhỏ)", "level": 3, "group": "application", "tooltip": "💡 Cối nhám nghiền hạt, Cối trơn trộn lỏng", "detail": "<h3>🧪 Dụng cụ Cối Chày</h3><ul><li><b>Cối sứ/thủy tinh nhám:</b> Tạo ma sát cơ học để nghiền hạt.</li><li><b>Cối thủy tinh trơn:</b> Trộn chất lỏng/thuốc mỡ (không nghiền được).</li><li><b>Cối đá mã não:</b> Bề mặt siêu cứng, dùng cho chất tinh khiết.</li></ul>" },
+    { "id": 16, "label": "Máy Nghiền Búa (Hammer Mill)", "level": 3, "group": "application", "tooltip": "💡 Cơ chế Va Đập (Impact) tốc độ cao", "detail": "<h3>🔨 Máy nghiền búa</h3><p>Dùng búa quay tốc độ cao đập vỡ hạt giòn cứng. Cải tiến lưới rây Omega (thêm chà xát) và luồng khí thổi chống nghẽn bột lơ lửng.</p>" },
+    { "id": 17, "label": "Máy Nghiền Bi (Ball Mill)", "level": 3, "group": "application", "tooltip": "💡 Va Đập + Chà Xát, Tốc độ tới hạn Nc", "detail": "<h3>🟢 Máy nghiền bi</h3><p>Trống quay chứa bi (40-50% thể tích). Vận hành ở 70-80% Tốc độ tới hạn (Nc = 42.3 / √D) để tạo thể thác rơi (Cascade).</p>" },
+    { "id": 18, "label": "Rủi Ro Ma Sát Nhiệt & Vô Định Hình", "level": 4, "group": "resistance", "tooltip": "💡 CẤM dùng máy nghiền bi cho chất nhạy nhiệt/protein", "detail": "<h3>⚠️ CẢNH BÁO: Ma sát nhiệt cao</h3><p>Máy nghiền bi sinh nhiệt ma sát khổng lồ. <b>CẤM DÙNG</b> cho chất có nhiệt độ nóng chảy thấp (<90°C), chất nhạy nhiệt, Protein, Enzyme, mAbs (gây phân hủy/vô định hình hóa).</p>" },
+    { "id": 19, "label": "Máy Nghiền Phản Lực (Jet Mill)", "level": 3, "group": "application", "tooltip": "💡 Tự va đập dòng khí nén + Bánh xe phân loại", "detail": "<h3>💨 Máy nghiền năng lượng động (Jet Mill)</h3><p>Sử dụng 3 súng phun khí nén góc 120° tạo lốc xoáy cho hạt tự va đập. Kiểm soát kích thước hạt tối đa bằng Bánh xe phân loại quay ở tâm.</p>" },
+    { "id": 20, "label": "Ưu Thế Bảo Vệ Hoạt Chất Nhạy Nhiệt", "level": 4, "group": "application", "tooltip": "💡 Khí nén giãn nở thu nhiệt làm mát buồng nghiền", "detail": "<h3>❄️ Giải pháp cho chất nhạy nhiệt</h3><p>Hạt tự va đập không ma sát kim loại + Khí nén giãn nở thu nhiệt làm mát tự động. Lựa chọn tối thượng cho Protein, Enzyme, mAbs.</p>" }
   ],
   "edges": [
-    { "from": 1, "to": 2, "label": "Phân loại kiểu hình", "isMain": true },
-    { "from": 1, "to": 3, "label": "Thành phần sinh tồn", "isMain": true },
-    { "from": 1, "to": 4, "label": "Yếu tố phụ trợ", "isMain": true },
-    { "from": 1, "to": 5, "label": "Minh họa lâm sàng", "isMain": true },
+    { "from": 1, "to": 2, "label": "Chuẩn hóa quy trình", "isMain": true },
+    { "from": 1, "to": 3, "label": "Cơ sở sinh dược học", "isMain": true },
+    { "from": 1, "to": 4, "label": "Nguyên lý vật lý", "isMain": true },
+    { "from": 1, "to": 5, "label": "Triển khai sản xuất", "isMain": true },
 
-    { "from": 2, "to": 6, "label": "Hình cầu/bầu dục", "isMain": true },
-    { "from": 2, "to": 7, "label": "Hình que", "isMain": true },
-    { "from": 2, "to": 8, "label": "Hình uốn cong", "isMain": true },
+    { "from": 2, "to": 6, "label": "Minh họa quy trình 6 bước", "isMain": true },
+    { "from": 6, "to": 7, "label": "Bổ sung tá dược rã", "isMain": true },
 
-    { "from": 3, "to": 9, "label": "Áo giáp bảo vệ", "isMain": true },
-    { "from": 3, "to": 19, "label": "Màng sinh chất", "isMain": true },
-    { "from": 3, "to": 22, "label": "Bộ máy dịch mã", "isMain": true },
-    { "from": 3, "to": 25, "label": "Bộ gen di truyền", "isMain": true },
+    { "from": 3, "to": 8, "label": "Tuân theo định luật", "isMain": true },
+    { "from": 8, "to": 9, "label": "Nghiền hạt làm tăng vọt", "isMain": true },
+    { "from": 9, "to": 10, "label": "Thúc đẩy hòa tan nâng cao", "isMain": true },
+    { "from": 3, "to": 11, "label": "Quy định tiêu chuẩn cho", "isMain": true },
 
-    { "from": 9, "to": 10, "label": "Vách dày 25nm", "isMain": true },
-    { "from": 9, "to": 11, "label": "Vách mỏng 3nm", "isMain": true },
-    { "from": 9, "to": 12, "label": "Không vách/Acid Mycolic", "isMain": true },
+    { "from": 4, "to": 12, "label": "Tạo vết nứt dẫn đến", "isMain": true },
+    { "from": 4, "to": 13, "label": "Phương & Thời gian tạo nên", "isMain": true },
+    { "from": 4, "to": 14, "label": "Đánh giá hiệu suất qua", "isMain": true },
 
-    { "from": 11, "to": 13, "label": "Cấu trúc màng ngoài", "isMain": true },
-    { "from": 11, "to": 14, "label": "Kênh vận chuyển", "isMain": true },
+    { "from": 5, "to": 15, "label": "Thao tác phòng thí nghiệm", "isMain": true },
+    { "from": 5, "to": 16, "label": "Sử dụng cơ chế Va đập", "isMain": true },
+    { "from": 5, "to": 17, "label": "Sử dụng Va đập + Chà xát", "isMain": true },
+    { "from": 5, "to": 19, "label": "Sử dụng Khí nén siêu cao áp", "isMain": true },
 
-    { "from": 16, "to": 15, "label": "Ức chế không thuận nghịch", "isMain": true },
-    { "from": 17, "to": 15, "label": "Cạnh tranh vị trí bám D-Ala", "isMain": true },
-    { "from": 17, "to": 13, "label": "Bị màng ngoài OM chặn (Kháng tự nhiên)", "isMain": false, "isImportant": true },
-    { "from": 16, "to": 12, "label": "Thất bại điều trị do không có vách", "isMain": false, "isImportant": true },
+    { "from": 17, "to": 18, "label": "Sinh ma sát nhiệt gây phân hủy (Bẫy nhiệt)", "isMain": false, "isImportant": true },
 
-    { "from": 20, "to": 19, "label": "Bám Lipid A mồi gây ly giải", "isMain": true },
-    { "from": 20, "to": 13, "label": "Cần Lipid A làm mồi gắn", "isMain": false, "isImportant": true },
-    { "from": 19, "to": 21, "label": "Tồn tại hệ thống", "isMain": true },
-
-    { "from": 23, "to": 22, "label": "Ức chế dịch mã thuận nghịch (Kìm khuẩn)", "isMain": true },
-    { "from": 24, "to": 22, "label": "Gắn 30S gây đọc sai mã Codon (Diệt khuẩn)", "isMain": true },
-
-    { "from": 25, "to": 26, "label": "Chứa enzyme tháo xoắn", "isMain": true },
-    { "from": 27, "to": 26, "label": "Đóng băng trạng thái cắt gây đứt gãy ADN", "isMain": true },
-    { "from": 28, "to": 25, "label": "Cắt nguồn Folic Acid tổng hợp ADN", "isMain": true },
-
-    { "from": 4, "to": 29, "label": "Ức chế thực bào", "isMain": true },
-    { "from": 4, "to": 30, "label": "Bám dính & Biofilm", "isMain": true },
-    { "from": 4, "to": 31, "label": "Động cơ di chuyển", "isMain": true },
-    { "from": 4, "to": 32, "label": "Pili bám & Tiếp hợp", "isMain": true },
-    { "from": 4, "to": 33, "label": "Truyền gen kháng", "isMain": true },
-    { "from": 4, "to": 34, "label": "Dạng sống đề kháng", "isMain": true },
-
-    { "from": 30, "to": 29, "label": "Phụ trợ bền vững", "isMain": false },
-
-    { "from": 5, "to": 35, "label": "Dịch tễ 198 ca", "isMain": true },
-    { "from": 5, "to": 36, "label": "Diệt khuẩn & SAD", "isMain": true },
-    { "from": 5, "to": 37, "label": "Dự phòng & Vaccine", "isMain": true }
+    { "from": 19, "to": 20, "label": "Khí nén giãn nở thu nhiệt giúp bảo vệ", "isMain": true },
+    { "from": 20, "to": 18, "label": "Giải pháp thay thế khắc phục rủi ro", "isMain": false, "isImportant": true }
   ]
 }
