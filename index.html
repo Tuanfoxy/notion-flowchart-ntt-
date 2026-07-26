@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Advanced Hierarchical Flowchart Engine</title>
+  <title>iCanStudy Advanced Interactive Engine</title>
   <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   
   <style>
@@ -25,32 +25,33 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     html, body { width: 100%; height: 100%; background-color: var(--bg-color); color: var(--text-color); overflow: hidden; }
 
-    /* TOOLBAR CONTROL */
+    /* TOOLBAR */
     #toolbar {
       height: 50px;
       background: var(--card-bg);
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
-      padding: 0 15px;
-      gap: 10px;
+      padding: 0 12px;
+      gap: 8px;
       z-index: 10;
     }
     .btn {
-      padding: 6px 12px; border-radius: 4px; border: 1px solid var(--border-color);
-      background: var(--bg-color); color: var(--text-color); cursor: pointer; font-size: 13px; font-weight: 500;
+      padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border-color);
+      background: var(--bg-color); color: var(--text-color); cursor: pointer; font-size: 12px; font-weight: 600;
+      transition: all 0.2s ease;
     }
     .btn:hover { background: var(--accent-color); color: white; border-color: var(--accent-color); }
     .btn.active { background: var(--accent-color); color: white; }
     #search-input {
       padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border-color);
-      background: var(--bg-color); color: var(--text-color); font-size: 13px; outline: none; width: 180px;
+      background: var(--bg-color); color: var(--text-color); font-size: 12px; outline: none; width: 140px;
     }
 
     #main-container { width: 100%; height: calc(100vh - 50px); min-height: 550px; position: relative; display: flex; }
     #network { width: 100%; height: 100%; min-height: 550px; background-color: var(--bg-color); }
 
-    /* SLIDE-OUT DRAWER */
+    /* DRAWER */
     #drawer {
       position: absolute; top: 0; right: 0; width: var(--drawer-width); height: 100%;
       background: var(--card-bg); border-left: 1px solid var(--border-color);
@@ -61,19 +62,20 @@
     #drawer-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-color); }
     #drawer-content { margin-top: 20px; line-height: 1.6; font-size: 14px; }
     
-    .instruction-tag {
-      font-size: 11px; color: #888; margin-left: auto;
+    .status-guide {
+      font-size: 11px; color: #777; margin-left: auto; font-weight: 500;
     }
   </style>
 </head>
 <body>
 
   <div id="toolbar">
-    <input type="text" id="search-input" placeholder="🔍 Tìm kiếm..." oninput="handleSearch(this.value)">
+    <button class="btn active" id="btn-mode" onclick="cycleMode()">🌐 Dạng 2: Hệ thống</button>
     <button class="btn" id="btn-recall" onclick="toggleActiveRecall()">❓ Active Recall</button>
-    <button class="btn" onclick="resetView()">🔄 Reset View</button>
-    <button class="btn" onclick="toggleDarkMode()">🌙 / ☀️</button>
-    <span class="instruction-tag">💡 Click đơn: Mở chi tiết | Click đúp: Thu/Mở nhánh</span>
+    <input type="text" id="search-input" placeholder="🔍 Tìm nút..." oninput="handleSearch(this.value)">
+    <button class="btn" onclick="resetView()">🔄 Reset</button>
+    <button class="btn" onclick="toggleDarkMode()">🌙/☀️</button>
+    <span class="status-guide" id="guide-text">Mặc định: Chỉ hiện đường chính | Đúp click: Mở đường phụ</span>
   </div>
 
   <div id="main-container">
@@ -88,95 +90,86 @@
     let network = null;
     let nodesDataSet = new vis.DataSet();
     let edgesDataSet = new vis.DataSet();
+    
+    // TRẠNG THÁI HỆ THỐNG
+    let currentMode = 2; // MẶC ĐỊNH LÀ DẠNG 2 (HỆ THỐNG THÔNG TIN)
     let isActiveRecall = false;
-    let collapsedNodes = new Set(); // Lưu danh sách nút đang bị thu gọn
+    let lockedNodeId = null; // Nút đang được khóa đường đi
+    let activeSecondaryNodeId = null; // Nút đang mở liên kết phụ (Dạng 2)
+    let clickTimeout = null;
 
-    // DỮ LIỆU MẪU CÓ PHÂN CẤP (Level 1 = Chính, Level 2/3 = Phụ)
+    // DỮ LIỆU MẪU CÓ CẤU TRÚC MAIN vs SECONDARY
     const rawData = {
       "nodes": [
-        { "id": 1, "label": "Vi khuẩn Gram-âm", "level": 1, "group": "target", "tooltip": "💡 NÚT CHÍNH (BẬC 1): Thành trì 2 lớp giáp.", "detail": "<h3>📌 Vi khuẩn Gram-âm</h3><p>Cấu trúc chính gồm <b>Màng ngoài</b> và <b>Lớp Peptidoglycan mỏng</b>.</p>" },
-        { "id": 2, "label": "Kênh Porin", "level": 2, "group": "structure", "tooltip": "💡 Chi tiết (Bậc 2): Cửa ngõ qua màng.", "detail": "<h3>🚪 Kênh Porin</h3><p>Kênh dẫn cho thuốc thân nước đi qua.</p>" },
-        { "id": 3, "label": "Vách Peptidoglycan", "level": 2, "group": "structure", "tooltip": "💡 Chi tiết (Bậc 2): Bộ khung chịu lực.", "detail": "<h3>🧱 Vách Peptidoglycan</h3><p>Đích tác dụng của nhiều kháng sinh diệt khuẩn.</p>" },
-        
-        { "id": 4, "label": "Kháng Sinh Beta-lactam", "level": 1, "group": "drug", "tooltip": "💡 NÚT CHÍNH (BẬC 1): Nhóm kháng sinh chính.", "detail": "<h3>💊 Kháng sinh Beta-lactam</h3><p>Bao gồm Penicillin, Cephalosporin, Carbapenem.</p>" },
-        { "id": 5, "label": "Ức chế Enzyme PBP", "level": 2, "group": "mechanism", "tooltip": "💡 Cơ chế tác dụng (Bậc 2).", "detail": "<h3>🛠️ Enzyme PBP</h3><p>Beta-lactam gắn PBP khiến vi khuẩn không tổng hợp được vách.</p>" },
-        { "id": 6, "label": "Tiết Beta-lactamase", "level": 2, "group": "resistance", "tooltip": "💡 Cơ chế kháng thuốc (Bậc 2).", "detail": "<h3>✂️ Beta-lactamase</h3><p>Enzyme phá hủy vòng Beta-lactam làm mất tác dụng của thuốc.</p>" }
+        { "id": 1, "label": "Vi khuẩn Gram-âm", "level": 1, "group": "target", "tooltip": "💡 Nút chính Bậc 1", "detail": "<h3>📌 Vi khuẩn Gram-âm</h3><p>Có vách tế bào kép đặc trưng.</p>" },
+        { "id": 2, "label": "Kênh Porin", "level": 2, "group": "structure", "tooltip": "💡 Cửa ngõ qua màng", "detail": "<h3>🚪 Kênh Porin</h3><p>Kênh vận chuyển chất thân nước.</p>" },
+        { "id": 3, "label": "Vách Peptidoglycan", "level": 2, "group": "structure", "tooltip": "💡 Bổ trợ vách", "detail": "<h3>🧱 Vách Peptidoglycan</h3><p>Đích tác dụng diệt khuẩn.</p>" },
+        { "id": 4, "label": "KS Beta-lactam", "level": 1, "group": "drug", "tooltip": "💡 Nút chính Bậc 1", "detail": "<h3>💊 Kháng sinh Beta-lactam</h3><p>Nhóm kháng sinh diệt khuẩn mạnh.</p>" },
+        { "id": 5, "label": "Ức chế Enzyme PBP", "level": 2, "group": "mechanism", "tooltip": "💡 Cơ chế tác dụng", "detail": "<h3>🛠️ Enzyme PBP</h3><p>Ngăn cản tổng hợp peptidoglycan.</p>" },
+        { "id": 6, "label": "Tiết Beta-lactamase", "level": 2, "group": "resistance", "tooltip": "💡 Cơ chế đề kháng", "detail": "<h3>✂️ Beta-lactamase</h3><p>Thủy phân vòng beta-lactam.</p>" }
       ],
       "edges": [
-        { "from": 1, "to": 2, "label": "Có" },
-        { "from": 1, "to": 3, "label": "Bao bọc" },
-        { "from": 4, "to": 2, "label": "Đi qua", "dashes": true },
-        { "from": 4, "to": 5, "label": "Cơ chế chính" },
-        { "from": 5, "to": 3, "label": "Phá hủy vách" },
-        { "from": 6, "to": 4, "label": "Đề kháng", "color": { "color": "#e74c3c" } }
+        // Ý CHÍNH (isMain: true) -> Nét liền đậm, có mũi tên
+        { "id": "e1-2", "from": 1, "to": 2, "label": "Chứa", "isMain": true },
+        { "id": "e1-3", "from": 1, "to": 3, "label": "Bao bọc", "isMain": true },
+        { "id": "e4-5", "from": 4, "to": 5, "label": "Cơ chế chính", "isMain": true },
+        { "id": "e5-3", "from": 5, "to": 3, "label": "Phá hủy vách", "isMain": true },
+        
+        // Ý PHỤ / LIÊN KẾT CHÉO (isMain: false) -> Nét đứt mảnh, KHÔNG mũi tên
+        { "id": "e4-2", "from": 4, "to": 2, "label": "Thấm qua", "isMain": false },
+        
+        // LIÊN KẾT CHÉO MẬT THIẾT QUAN TRỌNG (isMain: false nhưng isImportant: true) -> Coi như đường chính!
+        { "id": "e6-4", "from": 6, "to": 4, "label": "Đề kháng mạnh", "isMain": false, "isImportant": true }
       ]
     };
 
-    // BẢNG MÀU PHÂN CẤP SANG TRỌNG (NOTION THEME)
     const groupColors = {
-      target: { background: '#2196f3', border: '#1976d2', fontColor: '#ffffff' },      // Xanh dương nổi bật (Bậc 1)
-      drug: { background: '#2e7d32', border: '#1b5e20', fontColor: '#ffffff' },        // Xanh lá nổi bật (Bậc 1)
-      structure: { background: '#f3e5f5', border: '#ab47bc', fontColor: '#2f3437' },   // Tím dịu (Chi tiết Bậc 2)
-      mechanism: { background: '#fff9c4', border: '#fbc02d', fontColor: '#2f3437' },   // Vàng dịu (Chi tiết Bậc 2)
-      resistance: { background: '#ffebee', border: '#ef5350', fontColor: '#2f3437' }   // Đỏ dịu (Chi tiết Bậc 2)
+      target: { background: '#1976d2', border: '#0d47a1', fontColor: '#ffffff' },
+      drug: { background: '#2e7d32', border: '#1b5e20', fontColor: '#ffffff' },
+      structure: { background: '#f3e5f5', border: '#ab47bc', fontColor: '#2f3437' },
+      mechanism: { background: '#fff9c4', border: '#fbc02d', fontColor: '#2f3437' },
+      resistance: { background: '#ffebee', border: '#ef5350', fontColor: '#2f3437' }
     };
 
-    // Hàm lấy danh sách tất cả các nút con nối phía sau 1 nút
-    function getDescendants(parentId) {
-      let childNodes = [];
-      let childEdges = [];
-      
-      function traverse(currentId) {
-        const outEdges = edgesDataSet.get({ filter: e => e.from === currentId });
-        outEdges.forEach(edge => {
-          childEdges.push(edge.id);
-          if (!childNodes.includes(edge.to)) {
-            childNodes.push(edge.to);
-            traverse(edge.to);
-          }
-        });
-      }
-      traverse(parentId);
-      return { nodes: childNodes, edges: childEdges };
-    }
-
     function initNetwork() {
+      // BƯỚC 1: XỬ LÝ NODES
       const processedNodes = rawData.nodes.map(node => {
         const isLevel1 = node.level === 1;
         const colorConfig = groupColors[node.group] || { background: '#ffffff', border: '#cccccc', fontColor: '#2f3437' };
-        
-        // Kiểm tra xem nút có nhánh con không
-        const hasChildren = rawData.edges.some(e => e.from === node.id);
-        const labelSuffix = hasChildren ? ' [-]' : '';
-
         return {
           id: node.id,
-          label: (node.label + labelSuffix),
+          label: node.label,
           originalLabel: node.label,
-          hasChildren: hasChildren,
           title: node.tooltip,
           detail: node.detail,
           level: node.level,
           group: node.group,
           color: { background: colorConfig.background, border: colorConfig.border },
-          font: { 
-            size: isLevel1 ? 16 : 13, 
-            color: colorConfig.fontColor,
-            bold: isLevel1
-          },
+          font: { size: isLevel1 ? 15 : 12.5, color: colorConfig.fontColor, bold: isLevel1 },
           shape: 'box',
           margin: isLevel1 ? 12 : 8,
-          borderWidth: isLevel1 ? 3 : 1.5,
-          shadow: isLevel1 ? { enabled: true, color: 'rgba(0,0,0,0.15)', size: 5 } : false
+          borderWidth: isLevel1 ? 2.5 : 1.5
         };
       });
 
-      const processedEdges = rawData.edges.map(edge => ({
-        ...edge,
-        arrows: 'to',
-        font: { size: 11, align: 'middle' },
-        smooth: { type: 'cubicBezier', forceDirection: 'horizontal' }
-      }));
+      // BƯỚC 2: XỬ LÝ EDGES THEO QUY TẮC NÉT VẼ
+      const processedEdges = rawData.edges.map(edge => {
+        const isMainOrImportant = edge.isMain || edge.isImportant;
+        return {
+          id: edge.id,
+          from: edge.from,
+          to: edge.to,
+          label: edge.label,
+          isMain: edge.isMain,
+          isImportant: edge.isImportant,
+          width: isMainOrImportant ? 3 : 1.2,                 // Đậm vs Mảnh
+          dashes: isMainOrImportant ? false : [5, 5],            // Liền vs Đứt
+          arrows: isMainOrImportant ? 'to' : '',                 // Có mũi tên vs KHÔNG mũi tên
+          color: { color: isMainOrImportant ? '#2eaadc' : '#999999', opacity: 1 },
+          font: { size: 10, align: 'middle' },
+          smooth: { type: 'cubicBezier', forceDirection: 'horizontal' }
+        };
+      });
 
       nodesDataSet.add(processedNodes);
       edgesDataSet.add(processedEdges);
@@ -184,88 +177,187 @@
       const container = document.getElementById('network');
       const data = { nodes: nodesDataSet, edges: edgesDataSet };
       
-      // CẤU HÌNH BỐ CỤC PHÂN CẤP (HIERARCHICAL LAYOUT)
       const options = {
         layout: {
-          hierarchical: {
-            enabled: true,
-            direction: 'LR',         // LR = Left to Right (Từ trái sang phải)
-            sortMethod: 'directed',
-            nodeSpacing: 180,        // Khoảng cách giữa các hàng
-            levelSeparation: 220     // Khoảng cách giữa các Bậc (Level)
-          }
+          hierarchical: { enabled: true, direction: 'LR', sortMethod: 'directed', nodeSpacing: 160, levelSeparation: 220 }
         },
-        physics: { enabled: false }, // TẮT HOÀN TOÀN VẬT LÝ -> DỰNG PHẲNG CỐ ĐỊNH, KHÔNG GIẬT LAG
+        physics: { enabled: false },
         interaction: { hover: true }
       };
 
       network = new vis.Network(container, data, options);
 
-      // CLICK ĐƠN: Mở ngăn kéo đọc chi tiết & Highlight luồng
-      network.on("click", function (params) {
-        if (params.nodes.length > 0) {
-          const nodeId = params.nodes[0];
-          const nodeData = nodesDataSet.get(nodeId);
-          openDrawer(nodeData.detail);
-          highlightPath(nodeId);
-        } else {
-          closeDrawer();
-          resetHighlight();
+      // THIẾT LẬP DẠNG HIỂN THỊ MẶC ĐỊNH LÀ DẠNG 2
+      applyModeRules();
+
+      // BẮT SỰ KIỆN HOVER (DẠNG 1)
+      network.on("hoverNode", function (params) {
+        if (currentMode === 1 && !lockedNodeId) {
+          showConnectionsForNode(params.node, 0.4, false); // Hiện mờ tạm thời
         }
       });
 
-      // CLICK ĐÚP: Thu gọn / Mở rộng nhánh con
+      network.on("blurNode", function () {
+        if (currentMode === 1 && !lockedNodeId) {
+          hideAllEdges(); // Rê chuột ra thì ẩn lại
+        }
+      });
+
+      // BẮT SỰ KIỆN CLICK DƠN & DOUBLE CLICK (XỬ LÝ KHÔNG BỊ XUNG ĐỘT)
+      network.on("click", function (params) {
+        if (clickTimeout) clearTimeout(clickTimeout);
+
+        clickTimeout = setTimeout(() => {
+          if (params.nodes.length > 0) {
+            const nodeId = params.nodes[0];
+            handleSingleClick(nodeId);
+          } else {
+            handleBackgroundClick();
+          }
+        }, 220); // Đợi 220ms để phân biệt với double click
+      });
+
       network.on("doubleClick", function (params) {
+        if (clickTimeout) clearTimeout(clickTimeout); // Hủy single click nếu là double click
         if (params.nodes.length > 0) {
           const nodeId = params.nodes[0];
-          toggleBranch(nodeId);
+          handleDoubleClick(nodeId);
         }
       });
     }
 
-    // HÀM TÍNH NĂNG: Thu / Xòe nhánh
-    function toggleBranch(nodeId) {
-      const descendants = getDescendants(nodeId);
-      if (descendants.nodes.length === 0) return;
+    // --- CÁC HÀM ĐIỀU KHIỂN DẠNG HIỂN THỊ ---
 
-      const isCollapsed = collapsedNodes.has(nodeId);
-      const parentNode = nodesDataSet.get(nodeId);
+    function applyModeRules() {
+      lockedNodeId = null;
+      activeSecondaryNodeId = null;
+      resetNodesOpacity();
 
-      if (isCollapsed) {
-        // MỞ RỘNG NHÁNH
-        collapsedNodes.delete(nodeId);
-        nodesDataSet.update(descendants.nodes.map(id => ({ id, hidden: false })));
-        edgesDataSet.update(descendants.edges.map(id => ({ id, hidden: false })));
-        nodesDataSet.update({ id: nodeId, label: parentNode.originalLabel + ' [-]' });
-      } else {
-        // THU GỌN NHÁNH
-        collapsedNodes.add(nodeId);
-        nodesDataSet.update(descendants.nodes.map(id => ({ id, hidden: true })));
-        edgesDataSet.update(descendants.edges.map(id => ({ id, hidden: true })));
-        nodesDataSet.update({ id: nodeId, label: parentNode.originalLabel + ' [+]' });
+      if (currentMode === 1) {
+        // DẠNG 1: BẢN ĐỒ THÔNG TIN -> Ban đầu ẨN 100% liên kết
+        hideAllEdges();
+      } else if (currentMode === 2) {
+        // DẠNG 2: HỆ THỐNG THÔNG TIN -> Chỉ hiện liên kết CHÍNH / QUAN TRỌNG
+        showOnlyMainEdges();
       }
     }
 
-    // ACTIVE RECALL MODE
-    function toggleActiveRecall() {
-      isActiveRecall = !isActiveRecall;
-      document.getElementById('btn-recall').classList.toggle('active', isActiveRecall);
-      
-      const updates = nodesDataSet.get().map(node => {
-        const suffix = node.hasChildren ? (collapsedNodes.has(node.id) ? ' [+]' : ' [-]') : '';
-        return {
-          id: node.id,
-          label: isActiveRecall ? ('❓ [Khái niệm]' + suffix) : (node.originalLabel + suffix)
-        };
-      });
-      nodesDataSet.update(updates);
+    function cycleMode() {
+      currentMode = (currentMode === 2) ? 1 : 2;
+      const btn = document.getElementById('btn-mode');
+      const guide = document.getElementById('guide-text');
+
+      if (currentMode === 1) {
+        btn.innerText = "📍 Dạng 1: Bản đồ";
+        btn.classList.remove('active');
+        guide.innerText = "Hover: Mờ tạm thời | Click 1: Rõ & Khóa | Click đúp: Hủy";
+      } else {
+        btn.innerText = "🌐 Dạng 2: Hệ thống";
+        btn.classList.add('active');
+        guide.innerText = "Mặc định: Chỉ hiện đường chính | Click đúp: Mở đường phụ";
+      }
+      closeDrawer();
+      applyModeRules();
     }
 
-    function openDrawer(content) {
-      document.getElementById('drawer-content').innerHTML = content || 'Không có chi tiết.';
-      document.getElementById('drawer').classList.add('open');
+    // LOGIC SINGLE CLICK
+    function handleSingleClick(nodeId) {
+      const nodeData = nodesDataSet.get(nodeId);
+      openDrawer(nodeData.detail);
+
+      if (currentMode === 1) {
+        // DẠNG 1: Click 1 cái -> Hiện đường đi RÕ NÉT & KHÓA LẠI
+        lockedNodeId = nodeId;
+        showConnectionsForNode(nodeId, 1.0, true);
+      } else if (currentMode === 2) {
+        // DẠNG 2: Click 1 cái -> Highlight luồng chính của nút đó
+        highlightPath(nodeId);
+      }
     }
-    function closeDrawer() { document.getElementById('drawer').classList.remove('open'); }
+
+    // LOGIC DOUBLE CLICK
+    function handleDoubleClick(nodeId) {
+      if (currentMode === 1) {
+        // DẠNG 1: Click đúp -> HỦY KHÓA ĐƯỜNG ĐI (Quay về ẩn hết)
+        lockedNodeId = null;
+        hideAllEdges();
+        resetNodesOpacity();
+      } else if (currentMode === 2) {
+        // DẠNG 2: Click đúp -> BẬT/TẮT LIÊN KẾT CHÉO PHỤ CỦA NÚT NÀY
+        if (activeSecondaryNodeId === nodeId) {
+          activeSecondaryNodeId = null;
+          showOnlyMainEdges();
+        } else {
+          activeSecondaryNodeId = nodeId;
+          showMainAndSpecificSecondaryEdges(nodeId);
+        }
+      }
+    }
+
+    function handleBackgroundClick() {
+      closeDrawer();
+      applyModeRules();
+    }
+
+    // --- HÀM ẨN / HIỆN ĐƯỜNG VẼ CHI TIẾT ---
+
+    function hideAllEdges() {
+      const updates = edgesDataSet.get().map(e => ({ id: e.id, hidden: true }));
+      edgesDataSet.update(updates);
+    }
+
+    function showOnlyMainEdges() {
+      const updates = edgesDataSet.get().map(e => {
+        const isMainOrImportant = e.isMain || e.isImportant;
+        return {
+          id: e.id,
+          hidden: !isMainOrImportant,
+          color: { color: '#2eaadc', opacity: 1 }
+        };
+      });
+      edgesDataSet.update(updates);
+    }
+
+    function showMainAndSpecificSecondaryEdges(targetNodeId) {
+      const updates = edgesDataSet.get().map(e => {
+        const isMainOrImportant = e.isMain || e.isImportant;
+        const isConnectedToTarget = (e.from === targetNodeId || e.to === targetNodeId);
+        
+        if (isMainOrImportant) {
+          return { id: e.id, hidden: false, color: { color: '#2eaadc', opacity: 1 } };
+        } else if (isConnectedToTarget) {
+          return { id: e.id, hidden: false, color: { color: '#e74c3c', opacity: 1 } }; // Hiện đường phụ màu đỏ rực
+        } else {
+          return { id: e.id, hidden: true };
+        }
+      });
+      edgesDataSet.update(updates);
+    }
+
+    function showConnectionsForNode(nodeId, opacityLevel, dimOthers) {
+      const connectedEdges = network.getConnectedEdges(nodeId);
+      const connectedNodes = network.getConnectedNodes(nodeId);
+      connectedNodes.push(nodeId);
+
+      // Cập nhật Edges
+      const edgeUpdates = edgesDataSet.get().map(e => {
+        if (connectedEdges.includes(e.id)) {
+          return { id: e.id, hidden: false, color: { color: e.isMain ? '#2eaadc' : '#e74c3c', opacity: opacityLevel } };
+        } else {
+          return { id: e.id, hidden: true };
+        }
+      });
+      edgesDataSet.update(edgeUpdates);
+
+      // Cập nhật Nodes nếu cần mờ xung quanh
+      if (dimOthers) {
+        const nodeUpdates = nodesDataSet.get().map(n => ({
+          id: n.id,
+          opacity: connectedNodes.includes(n.id) ? 1.0 : 0.25
+        }));
+        nodesDataSet.update(nodeUpdates);
+      }
+    }
 
     function highlightPath(selectedNodeId) {
       const connectedNodes = network.getConnectedNodes(selectedNodeId);
@@ -277,21 +369,39 @@
       nodesDataSet.update(updates);
     }
 
-    function resetHighlight() {
+    function resetNodesOpacity() {
       const updates = nodesDataSet.get().map(node => ({ id: node.id, opacity: 1 }));
       nodesDataSet.update(updates);
     }
 
+    // --- CÁC TÍNH NĂNG PHỤ TRỢ ---
+
+    function toggleActiveRecall() {
+      isActiveRecall = !isActiveRecall;
+      document.getElementById('btn-recall').classList.toggle('active', isActiveRecall);
+      const updates = nodesDataSet.get().map(node => ({
+        id: node.id,
+        label: isActiveRecall ? '❓ [Khái niệm]' : node.originalLabel
+      }));
+      nodesDataSet.update(updates);
+    }
+
+    function openDrawer(content) {
+      document.getElementById('drawer-content').innerHTML = content || 'Không có chi tiết.';
+      document.getElementById('drawer').classList.add('open');
+    }
+    function closeDrawer() { document.getElementById('drawer').classList.remove('open'); }
+
     function handleSearch(query) {
-      if (!query.trim()) { resetHighlight(); return; }
+      if (!query.trim()) { applyModeRules(); return; }
       const matchedNode = nodesDataSet.get().find(n => n.originalLabel.toLowerCase().includes(query.toLowerCase()));
       if (matchedNode) {
-        network.focus(matchedNode.id, { scale: 1.1, animation: { duration: 400 } });
-        highlightPath(matchedNode.id);
+        network.focus(matchedNode.id, { scale: 1.15, animation: { duration: 400 } });
+        handleSingleClick(matchedNode.id);
       }
     }
 
-    function resetView() { network.fit({ animation: { duration: 400 } }); resetHighlight(); closeDrawer(); }
+    function resetView() { network.fit({ animation: { duration: 400 } }); applyModeRules(); closeDrawer(); }
     function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 
     window.onload = initNetwork;
