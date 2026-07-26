@@ -2,7 +2,7 @@
   "nodes": [
     { "id": 1, "label": "CẤU TRÚC VÀ HÌNH THÁI HỌC VI KHUẨN", "level": 1, "group": "target", "tooltip": "💡 Anchor: Trụ cột quyết định hình thái, phân loại, độc lực & đề kháng", "detail": "<h3>📌 ANCHOR CHÍNH</h3><p>Khác biệt cấu trúc Thành/Màng & Bộ phận bổ trợ quyết định hình thái, phân loại, độc lực và đề kháng lâm sàng.</p>" },
     
-    { "id": 2, "label": "I. Hình Thái Học", "level": 2, "group": "structure", "tooltip": "💡 Hình dạng + Cách sắp xếp", "detail": "<h3>I. Hình thái học tế bào</h3><p>Hình thái = Hình dạng + Cách sắp xếp. Dùng định danh kiểu hình theo Bergey's Manual.</p>" },
+    { "id": 2, "label": "I. Hình Thái Học Tế Bào", "level": 2, "group": "structure", "tooltip": "💡 Hình dạng + Cách sắp xếp", "detail": "<h3>I. Hình thái học tế bào</h3><p>Hình thái = Hình dạng + Cách sắp xếp. Dùng định danh kiểu hình theo Bergey's Manual.</p>" },
     { "id": 3, "label": "II. Thành Phần Bắt Buộc", "level": 2, "group": "structure", "tooltip": "💡 Sự sống còn & Đích tác động kháng sinh", "detail": "<h3>II. Thành phần bắt buộc</h3><p>Gồm 4 bộ phận thiết yếu: Thành, Màng, Ribosome và Thể nhân. Thiếu sót dẫn đến ly giải tế bào.</p>" },
     { "id": 4, "label": "III. Thành Phần Không Bắt Buộc", "level": 2, "group": "structure", "tooltip": "💡 Thích nghi, Độc lực & Chuyển gen ngang", "detail": "<h3>III. Thành phần không bắt buộc</h3><p>Giúp vi khuẩn tăng lực độc, bám dính, né thực bào và truyền gen kháng thuốc.</p>" },
     { "id": 5, "label": "IV. Case Study Lâm Sàng", "level": 2, "group": "target", "tooltip": "💡 Dịch Bạch hầu Việt Nam (2016-2020)", "detail": "<h3>IV. Case Study Lâm sàng: Dịch Bạch hầu</h3><p>Phân tích dịch tễ, phác đồ điều trị và dự phòng dịch Bạch hầu tại Việt Nam.</p>" },
@@ -20,22 +20,21 @@
     { "id": 14, "label": "Kênh Porin Xuyên Màng", "level": 5, "group": "structure", "tooltip": "💡 Cửa ngõ vận chuyển chất thân nước", "detail": "<h3>🚪 Kênh Porin</h3><p>Cho phép chất thân nước nhỏ và kháng sinh thấm qua. Vi khuẩn có thể biến đổi Porin để đề kháng.</p>" },
 
     { "id": 15, "label": "Enzyme Transpeptidase (PBP)", "level": 4, "group": "mechanism", "tooltip": "💡 Xúc tác tạo liên kết chéo Peptidoglycan", "detail": "<h3>🛠️ Enzyme PBP</h3><p>Đích tác động chính của kháng sinh nhóm Beta-lactam và Glycopeptide.</p>" },
-    { "id": 16, "label": "Kháng Sinh Beta-lactam", "level": 3, "group": "application", "tooltip": "💡 Penicillin, Cephalosporin...", "detail": "<h3>💊 Kháng sinh Beta-lactam</h3><p>Ức chế không thuận nghịch PBP. Rất an toàn, phổ rộng, là lựa chọn đầu tay trên lâm sàng.</p>" },
-    { "id": 17, "label": "Kháng Sinh Glycopeptide (Vancomycin)", "level": 3, "group": "application", "tooltip": "💡 Cạnh tranh đầu D-Ala-D-Ala", "detail": "<h3>💊 Vancomycin</h3><p>Cạnh tranh vị trí bám D-Ala-D-Ala. Chuyên trị cầu khuẩn Gram(+) kháng thuốc (MRSA).</p>" },
-    { "id": 18, "label": "Kháng Tự Nhiên Ở Gram Âm", "level": 5, "group": "resistance", "tooltip": "💡 Vancomycin không qua được màng OM", "detail": "<h3>🛡️ Đề kháng tự nhiên</h3><p>Phân tử Vancomycin quá bự (gấp 5-7 lần Beta-lactam) nên không chui qua được màng ngoài OM của Gram âm.</p>" },
+    { "id": 16, "label": "Kháng Sinh Beta-lactam", "level": 3, "group": "drug", "tooltip": "💡 Penicillin, Cephalosporin...", "detail": "<h3>💊 Kháng sinh Beta-lactam</h3><p>Ức chế không thuận nghịch PBP. Rất an toàn, phổ rộng, là lựa chọn đầu tay trên lâm sàng.</p>" },
+    { "id": 17, "label": "Kháng Sinh Glycopeptide (Vancomycin)", "level": 3, "group": "drug", "tooltip": "💡 Cạnh tranh vị trí bám D-Ala-D-Ala", "detail": "<h3>💊 Vancomycin</h3><p>Cạnh tranh vị trí bám D-Ala-D-Ala. Chuyên trị cầu khuẩn Gram(+) kháng thuốc (MRSA).</p>" },
 
     { "id": 19, "label": "2. Màng Tế Bào Chất", "level": 3, "group": "structure", "tooltip": "💡 Lớp Phospholipid kép + Protein (Không Sterol)", "detail": "<h3>🌊 Màng Tế Bào Chất</h3><p>Kiểm soát trao đổi chất, hô hấp tế bào (ATP) và phân bào. Không chứa Sterol (khác người/nấm).</p>" },
-    { "id": 20, "label": "Kháng Sinh Colistin (Polymyxin)", "level": 3, "group": "application", "tooltip": "💡 Gắn Lipid A gây ly giải màng Gram(-)", "detail": "<h3>💊 Colistin</h3><p>Tương tác Lipid A mồi để vào ly giải màng Gram âm. Độc tính cao trên Thận và Thần kinh người.</p>" },
+    { "id": 20, "label": "Kháng Sinh Colistin (Polymyxin)", "level": 3, "group": "drug", "tooltip": "💡 Gắn Lipid A mồi ly giải màng", "detail": "<h3>💊 Colistin</h3><p>Tương tác Lipid A mồi để vào ly giải màng Gram âm. Độc tính cao trên Thận và Thần kinh người.</p>" },
     { "id": 21, "label": "Bơm Đẩy Ngược (Efflux Pump)", "level": 4, "group": "resistance", "tooltip": "💡 Bơm RND 3 thành phần (MexAB-OprM)", "detail": "<h3>🛡️ Hệ thống Bơm Đẩy Ngược</h3><p>Nằm trên màng, chủ động bơm kháng sinh ra ngoài. Gây ra hiện tượng đa kháng thuốc (MDR) cực kỳ nguy hiểm.</p>" },
 
     { "id": 22, "label": "3. Ribosome 70S", "level": 3, "group": "structure", "tooltip": "💡 Tiểu đơn vị 30S + 50S", "detail": "<h3>🧬 Ribosome 70S</h3><p>Nhà máy sinh tổng hợp protein gồm 30S (16S rRNA) và 50S.</p>" },
-    { "id": 23, "label": "Ức Chế Dịch Mã 50S & 30S", "level": 4, "group": "application", "tooltip": "💡 Macrolides, Tetracyclines (Kìm khuẩn)", "detail": "<h3>💊 Kháng sinh Kìm khuẩn</h3><p>Macrolides, Clindamycin (gắn 50S), Tetracyclines (gắn 30S) -> Ức chế dịch mã thuận nghịch.</p>" },
-    { "id": 24, "label": "Kháng Sinh Aminoglycoside", "level": 4, "group": "application", "tooltip": "💡 Đọc sai mã Codon -> Diệt khuẩn", "detail": "<h3>💊 Aminoglycoside</h3><p>Gắn 30S làm đọc sai mã codon mRNA -> Tạo protein rác gây rối loạn tế bào -> Diệt khuẩn không đảo nghịch.</p>" },
+    { "id": 23, "label": "KS Macrolides & Tetracyclines", "level": 3, "group": "drug", "tooltip": "💡 Ức chế dịch mã 50S/30S (Kìm khuẩn)", "detail": "<h3>💊 Kháng sinh Kìm khuẩn</h3><p>Macrolides, Clindamycin (gắn 50S), Tetracyclines (gắn 30S) -> Ức chế dịch mã thuận nghịch.</p>" },
+    { "id": 24, "label": "Kháng Sinh Aminoglycoside", "level": 3, "group": "drug", "tooltip": "💡 Đọc sai mã Codon 30S -> Diệt khuẩn", "detail": "<h3>💊 Aminoglycoside</h3><p>Gắn 30S làm đọc sai mã codon mRNA -> Tạo protein rác gây rối loạn tế bào -> Diệt khuẩn không đảo nghịch.</p>" },
 
     { "id": 25, "label": "4. Thể Nhân (Nucleoid)", "level": 3, "group": "structure", "tooltip": "💡 1 NST ADN vòng kép, đơn bội", "detail": "<h3>🧬 Thể Nhân</h3><p>Chứa 1 NST ADN vòng kép, không màng nhân, không có Histone. Diễn ra hiện tượng Transertion đồng thời.</p>" },
     { "id": 26, "label": "Enzyme DNA Gyrase & Topo IV", "level": 4, "group": "mechanism", "tooltip": "💡 Tháo xoắn và cắt nối ADN", "detail": "<h3>🛠️ DNA Gyrase & Topoisomerase IV</h3><p>Tiểu đơn vị GyrA/ParC chịu trách nhiệm cắt tháo xoắn và nối lại mạch ADN khi sao chép.</p>" },
-    { "id": 27, "label": "Kháng Sinh Quinolone (Fluoroquinolone)", "level": 3, "group": "application", "tooltip": "💡 Đóng băng trạng thái cắt -> Đứt gãy ADN", "detail": "<h3>💊 Quinolones</h3><p>Ức chế hoạt tính nối của GyrA/ParC -> Đóng băng trạng thái cắt -> Đứt gãy ADN -> Chết tế bào.</p>" },
-    { "id": 28, "label": "Sulfamethoxazole & Trimethoprim", "level": 3, "group": "application", "tooltip": "💡 Ức chế tổng hợp Acid Folic", "detail": "<h3>💊 Cotrimoxazole (Bactrim)</h3><p>Ức chế 2 chặng liên tiếp con đường tổng hợp Acid Folic từ PABA -> Cắt nguồn nguyên liệu ADN.</p>" },
+    { "id": 27, "label": "Kháng Sinh Quinolone (Fluoroquinolone)", "level": 3, "group": "drug", "tooltip": "💡 Đóng băng trạng thái cắt -> Đứt gãy ADN", "detail": "<h3>💊 Quinolones</h3><p>Ức chế hoạt tính nối của GyrA/ParC -> Đóng băng trạng thái cắt -> Đứt gãy ADN -> Chết tế bào.</p>" },
+    { "id": 28, "label": "Cotrimoxazole (Sulfamethoxazole + Trimethoprim)", "level": 3, "group": "drug", "tooltip": "💡 Ức chế 2 chặng tổng hợp Acid Folic", "detail": "<h3>💊 Cotrimoxazole (Bactrim)</h3><p>Ức chế 2 chặng liên tiếp con đường tổng hợp Acid Folic từ PABA -> Cắt nguồn nguyên liệu ADN.</p>" },
 
     { "id": 29, "label": "1. Nang (Capsule)", "level": 3, "group": "structure", "tooltip": "💡 Kháng nguyên K, trốn thực bào", "detail": "<h3>🛡️ Nang (Capsule)</h3><p>Lớp Polysaccharide đậm đặc. Ức chế thực bào, làm tăng độc lực mạnh. Chiết xuất sản xuất Vaccine.</p>" },
     { "id": 30, "label": "2. Glycocalyx & Biofilm", "level": 3, "group": "structure", "tooltip": "💡 Chất keo bám dính & Màng sinh học", "detail": "<h3>🧫 Glycocalyx & Biofilm</h3><p>Polysaccharide lỏng lẻo giúp bám dính mô. Tạo màng Biofilm trên ống dẫn/máy thở gây nhiễm trùng bệnh viện (VAP).</p>" },
@@ -45,8 +44,8 @@
     { "id": 34, "label": "6. Bào Tử (Endospore)", "level": 3, "group": "resistance", "tooltip": "💡 Dạng sinh tồn Gram(+) cực hạn", "detail": "<h3>🔥 Bào Tử (Endospore)</h3><p>Dạng sinh tồn Gram(+). Chứa Acid Dipicolinic + Ca2+. Kháng nhiệt/UV cực hạn (Hấp 121°C/20ph hoặc Sấy 165-200°C/2h).</p>" },
 
     { "id": 35, "label": "Dịch Tễ & Lây Truyền", "level": 3, "group": "target", "tooltip": "💡 Tây Nguyên 2020: 198 ca", "detail": "<h3>📊 Dịch tễ Bạch hầu</h3><p>Đỉnh dịch 2020: 198 ca dương tính (138 ca bệnh, 60 người lành mang trùng). Lây qua giọt bắn, khí dung, tiếp xúc.</p>" },
-    { "id": 36, "label": "Phác Đồ Điều Trị Bạch Hầu", "level": 3, "group": "application", "tooltip": "💡 Penicillin G / Macrolide + SAD", "detail": "<h3>🏥 Điều trị Bạch hầu</h3><p>Kháng sinh Penicillin G hoặc Macrolide + Huyết thanh kháng độc tố SAD trung hòa độc tố + Điều trị bảo tồn.</p>" },
-    { "id": 37, "label": "Phác Đồ Dự Phòng Bạch Hầu", "level": 3, "group": "application", "tooltip": "💡 Erythromycin / Benzathine + Vaccine DTaP/Tdap", "detail": "<h3>🛡️ Dự phòng Bạch hầu</h3><p>Người tiếp xúc: Benzathine Penicillin G IM hoặc Erythromycin. Vaccine DTaP (trẻ nhỏ), Tdap (trẻ lớn), Td/Tdap (người lớn).</p>" }
+    { "id": 36, "label": "Phác Đồ Điều Trị Bạch Hầu", "level": 3, "group": "mechanism", "tooltip": "💡 Penicillin G / Macrolide + SAD", "detail": "<h3>🏥 Điều trị Bạch hầu</h3><p>Kháng sinh Penicillin G hoặc Macrolide + Huyết thanh kháng độc tố SAD trung hòa độc tố + Điều trị bảo tồn.</p>" },
+    { "id": 37, "label": "Phác Đồ Dự Phòng Bạch Hầu", "level": 3, "group": "mechanism", "tooltip": "💡 Erythromycin / Benzathine + Vaccine DTaP/Tdap", "detail": "<h3>🛡️ Dự phòng Bạch hầu</h3><p>Người tiếp xúc: Benzathine Penicillin G IM hoặc Erythromycin. Vaccine DTaP (trẻ nhỏ), Tdap (trẻ lớn), Td/Tdap (người lớn).</p>" }
   ],
   "edges": [
     { "from": 1, "to": 2, "label": "Phân loại kiểu hình", "isMain": true },
@@ -70,20 +69,21 @@
     { "from": 11, "to": 13, "label": "Cấu trúc màng ngoài", "isMain": true },
     { "from": 11, "to": 14, "label": "Kênh vận chuyển", "isMain": true },
 
-    { "from": 16, "to": 15, "label": "Ức chế PBP", "isMain": true },
-    { "from": 17, "to": 15, "label": "Cạnh tranh D-Ala-D-Ala", "isMain": true },
-    { "from": 17, "to": 18, "label": "Bị màng OM cản", "isMain": false, "isImportant": true },
-    { "from": 16, "to": 12, "label": "Thất bại ở Mycoplasma", "isMain": false, "isImportant": true },
+    { "from": 16, "to": 15, "label": "Ức chế không thuận nghịch", "isMain": true },
+    { "from": 17, "to": 15, "label": "Cạnh tranh vị trí bám D-Ala", "isMain": true },
+    { "from": 17, "to": 13, "label": "Bị màng ngoài OM chặn (Kháng tự nhiên)", "isMain": false, "isImportant": true },
+    { "from": 16, "to": 12, "label": "Thất bại điều trị do không có vách", "isMain": false, "isImportant": true },
 
-    { "from": 19, "to": 20, "label": "Gắn Lipid A ly giải", "isMain": true },
-    { "from": 19, "to": 21, "label": "Hệ thống bơm đẩy", "isMain": true },
+    { "from": 20, "to": 19, "label": "Bám Lipid A mồi gây ly giải", "isMain": true },
+    { "from": 20, "to": 13, "label": "Cần Lipid A làm mồi gắn", "isMain": false, "isImportant": true },
+    { "from": 19, "to": 21, "label": "Tồn tại hệ thống", "isMain": true },
 
-    { "from": 22, "to": 23, "label": "Kìm khuẩn 50S/30S", "isMain": true },
-    { "from": 22, "to": 24, "label": "Đọc sai mã 30S", "isMain": true },
+    { "from": 23, "to": 22, "label": "Ức chế dịch mã thuận nghịch (Kìm khuẩn)", "isMain": true },
+    { "from": 24, "to": 22, "label": "Gắn 30S gây đọc sai mã Codon (Diệt khuẩn)", "isMain": true },
 
-    { "from": 25, "to": 26, "label": "Tháo xoắn ADN", "isMain": true },
-    { "from": 27, "to": 26, "label": "Đóng băng GyrA/ParC", "isMain": true },
-    { "from": 28, "to": 25, "label": "Cắt nguồn Folic Acid", "isMain": true },
+    { "from": 25, "to": 26, "label": "Chứa enzyme tháo xoắn", "isMain": true },
+    { "from": 27, "to": 26, "label": "Đóng băng trạng thái cắt gây đứt gãy ADN", "isMain": true },
+    { "from": 28, "to": 25, "label": "Cắt nguồn Folic Acid tổng hợp ADN", "isMain": true },
 
     { "from": 4, "to": 29, "label": "Ức chế thực bào", "isMain": true },
     { "from": 4, "to": 30, "label": "Bám dính & Biofilm", "isMain": true },
@@ -91,6 +91,8 @@
     { "from": 4, "to": 32, "label": "Pili bám & Tiếp hợp", "isMain": true },
     { "from": 4, "to": 33, "label": "Truyền gen kháng", "isMain": true },
     { "from": 4, "to": 34, "label": "Dạng sống đề kháng", "isMain": true },
+
+    { "from": 30, "to": 29, "label": "Phụ trợ bền vững", "isMain": false },
 
     { "from": 5, "to": 35, "label": "Dịch tễ 198 ca", "isMain": true },
     { "from": 5, "to": 36, "label": "Diệt khuẩn & SAD", "isMain": true },
