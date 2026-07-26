@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>iCanStudy Advanced Interactive Engine</title>
+  <title>Master iCanStudy Flowchart Engine</title>
   <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   
   <style>
@@ -25,7 +25,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     html, body { width: 100%; height: 100%; background-color: var(--bg-color); color: var(--text-color); overflow: hidden; touch-action: none; }
 
-    /* TOOLBAR */
+    /* TOOLBAR CONTROL */
     #toolbar {
       height: 50px;
       background: var(--card-bg);
@@ -44,7 +44,7 @@
     .btn:hover { background: var(--accent-color); color: white; border-color: var(--accent-color); }
     .btn.active { background: var(--accent-color); color: white; }
     
-    /* NÚT GHI CHÚ SMARTER */
+    /* NÚT GHI CHÚ NỔI BẬT THÔNG MINH */
     .btn-note {
       opacity: 0.4;
       pointer-events: none;
@@ -76,7 +76,7 @@
     #network { width: 100%; height: 100%; min-height: 550px; background-color: var(--bg-color); cursor: grab; }
     #network:active { cursor: grabbing; }
 
-    /* DRAWER */
+    /* SLIDE-OUT DRAWER */
     #drawer {
       position: absolute; top: 0; right: 0; width: var(--drawer-width); height: 100%;
       background: var(--card-bg); border-left: 1px solid var(--border-color);
@@ -87,9 +87,7 @@
     #drawer-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-color); }
     #drawer-content { margin-top: 20px; line-height: 1.6; font-size: 14px; }
     
-    .status-guide {
-      font-size: 11px; color: #777; margin-left: auto; font-weight: 500;
-    }
+    .status-guide { font-size: 11px; color: #777; margin-left: auto; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -117,25 +115,23 @@
     let nodesDataSet = new vis.DataSet();
     let edgesDataSet = new vis.DataSet();
     
-    // TRẠNG THÁI HỆ THỐNG
-    let currentMode = 2; // MẶC ĐỊNH DẠNG 2 (HỆ THỐNG THÔNG TIN)
+    let currentMode = 2; 
     let isActiveRecall = false;
     let selectedNodeData = null;
     let activeSecondaryNodeId = null;
     let clickTimeout = null;
 
-    // TẬP HỢP CÁC NÚT VÀ ĐƯỜNG ĐI ĐANG TÍCH LŨY Ở DẠNG 1 (BẢN ĐỒ THÔNG TIN)
     let activePathNodeIds = new Set();
     let activePathEdgeIds = new Set();
 
-    // QUẢN LÝ XOAY 360° BẰNG CHUỘT & ĐIỆN THOẠI (TOUCH)
     let basePositions = null;
     let centerPos = { x: 0, y: 0 };
     let isRotating = false;
     let startAngle = 0;
     let currentRotation = 0;
 
-    const rawData = {
+    // DỮ LIỆU CHỮA CHÁY MẶC ĐỊNH (KHI KHÔNG CÓ THAM SỐ ?lesson=)
+    const defaultData = {
       "nodes": [
         { "id": 1, "label": "Vi khuẩn Gram-âm", "level": 1, "group": "target", "tooltip": "💡 Nút chính Bậc 1", "detail": "<h3>📌 Vi khuẩn Gram-âm</h3><p>Có vách tế bào kép đặc trưng gồm màng ngoài và peptidoglycan.</p>" },
         { "id": 2, "label": "Kênh Porin", "level": 2, "group": "structure", "tooltip": "💡 Cửa ngõ qua màng", "detail": "<h3>🚪 Kênh Porin</h3><p>Kênh vận chuyển chất thân nước đi qua màng ngoài.</p>" },
@@ -162,7 +158,29 @@
       resistance: { background: '#ffebee', border: '#ef5350', fontColor: '#2f3437' }
     };
 
-    function initNetwork() {
+    // HÀM TỰ ĐỘNG ĐỌC FILE JSON BÀI HỌC TỪ DÒNG ĐƯỜNG DẪN URL (?lesson=...)
+    async function fetchLessonData() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const jsonPath = urlParams.get('lesson');
+
+      if (!jsonPath) return defaultData;
+
+      try {
+        const response = await fetch(jsonPath);
+        if (!response.ok) throw new Error("Không tìm thấy file JSON bài học!");
+        return await response.json();
+      } catch (err) {
+        console.error("Lỗi nạp bài học:", err);
+        return {
+          "nodes": [{ "id": 1, "label": "⚠️ Lỗi nạp bài học", "level": 1, "group": "resistance", "tooltip": "Lỗi", "detail": `<h3>⚠️ Không tải được dữ liệu bài học</h3><p>Đường dẫn <code>${jsonPath}</code> không tồn tại trên GitHub.</p>` }],
+          "edges": []
+        };
+      }
+    }
+
+    async function initNetwork() {
+      const rawData = await fetchLessonData();
+
       const processedNodes = rawData.nodes.map(node => {
         const isLevel1 = node.level === 1;
         const colorConfig = groupColors[node.group] || { background: '#ffffff', border: '#cccccc', fontColor: '#2f3437' };
@@ -185,7 +203,7 @@
       const processedEdges = rawData.edges.map(edge => {
         const isMainOrImportant = edge.isMain || edge.isImportant;
         return {
-          id: edge.id,
+          id: edge.id || `e_${edge.from}_${edge.to}`,
           from: edge.from,
           to: edge.to,
           label: edge.label,
@@ -195,13 +213,7 @@
           dashes: isMainOrImportant ? false : [5, 5],
           arrows: isMainOrImportant ? 'to' : '',
           color: { color: isMainOrImportant ? '#2eaadc' : '#999999', opacity: 1 },
-          font: { 
-            size: 11, 
-            align: 'horizontal', 
-            background: '#ffffff',
-            strokeWidth: 2,
-            strokeColor: '#ffffff'
-          },
+          font: { size: 11, align: 'horizontal', background: '#ffffff', strokeWidth: 2, strokeColor: '#ffffff' },
           smooth: { type: 'cubicBezier', forceDirection: 'horizontal' }
         };
       });
@@ -256,13 +268,10 @@
         sumY += positions[id].y;
         count++;
       }
-      if (count > 0) {
-        centerPos = { x: sumX / count, y: sumY / count };
-      }
+      if (count > 0) { centerPos = { x: sumX / count, y: sumY / count }; }
       network.setOptions({ layout: { hierarchical: { enabled: false } } });
     }
 
-    // LẬP TRÌNH XOAY ĐA NỀN TẢNG (MÁY TÍNH & ĐIỆN THOẠI CẢM ỨNG)
     function setupInteractiveRotation() {
       const container = document.getElementById('network');
       container.addEventListener('contextmenu', e => e.preventDefault());
@@ -309,9 +318,7 @@
       }, { passive: true });
 
       window.addEventListener('touchend', (e) => {
-        if (e.touches.length < 2) {
-          isRotating = false;
-        }
+        if (e.touches.length < 2) { isRotating = false; }
       });
     }
 
@@ -319,16 +326,13 @@
       if (!basePositions) return;
       const cos = Math.cos(angle);
       const sin = Math.sin(angle);
-      
       const updates = [];
       for (let id in basePositions) {
         const pos = basePositions[id];
         const dx = pos.x - centerPos.x;
         const dy = pos.y - centerPos.y;
-        
         const newX = centerPos.x + (dx * cos - dy * sin);
         const newY = centerPos.y + (dx * sin + dy * cos);
-        
         updates.push({ id: Number(id), x: newX, y: newY });
       }
       nodesDataSet.update(updates);
@@ -366,7 +370,6 @@
       applyModeRules();
     }
 
-    // LOGIC SINGLE CLICK
     function handleSingleClick(nodeId) {
       selectedNodeData = nodesDataSet.get(nodeId);
 
@@ -375,12 +378,9 @@
       btnNote.innerText = `📝 Ghi chú: ${selectedNodeData.originalLabel}`;
 
       if (currentMode === 1) {
-        // KIỂM TRA NẾU NÚT CLICK ĐÃ NẰM TRONG LUỒNG KIẾN THỨC HIỆN TẠI
         if (activePathNodeIds.has(nodeId)) {
-          // NỐI DÀI LUỒNG KIẾN THỨC (TÍCH LŨY THÊM)
           extendMode1Path(nodeId);
         } else {
-          // BẮT ĐẦU MỘT LUỒNG KIẾN THỨC MỚI
           startMode1Path(nodeId);
         }
       } else if (currentMode === 2) {
@@ -388,48 +388,30 @@
       }
     }
 
-    // CÁC HÀM XỬ LÝ LŨY TIẾN CHO DẠNG 1 (BẢN ĐỒ THÔNG TIN)
     function startMode1Path(nodeId) {
       activePathNodeIds.clear();
       activePathEdgeIds.clear();
-
       activePathNodeIds.add(nodeId);
-      const connectedNodes = network.getConnectedNodes(nodeId);
-      connectedNodes.forEach(id => activePathNodeIds.add(id));
-
-      const connectedEdges = network.getConnectedEdges(nodeId);
-      connectedEdges.forEach(id => activePathEdgeIds.add(id));
-
+      network.getConnectedNodes(nodeId).forEach(id => activePathNodeIds.add(id));
+      network.getConnectedEdges(nodeId).forEach(id => activePathEdgeIds.add(id));
       renderMode1Path();
     }
 
     function extendMode1Path(nodeId) {
       activePathNodeIds.add(nodeId);
-      const connectedNodes = network.getConnectedNodes(nodeId);
-      connectedNodes.forEach(id => activePathNodeIds.add(id));
-
-      const connectedEdges = network.getConnectedEdges(nodeId);
-      connectedEdges.forEach(id => activePathEdgeIds.add(id));
-
+      network.getConnectedNodes(nodeId).forEach(id => activePathNodeIds.add(id));
+      network.getConnectedEdges(nodeId).forEach(id => activePathEdgeIds.add(id));
       renderMode1Path();
     }
 
     function renderMode1Path() {
-      // 1. Cập nhật hiển thị Edges
-      const edgeUpdates = edgesDataSet.get().map(e => {
-        if (activePathEdgeIds.has(e.id)) {
-          return { 
-            id: e.id, 
-            hidden: false, 
-            color: { color: e.isMain ? '#2eaadc' : '#e74c3c', opacity: 1.0 } 
-          };
-        } else {
-          return { id: e.id, hidden: true };
-        }
-      });
+      const edgeUpdates = edgesDataSet.get().map(e => ({
+        id: e.id,
+        hidden: !activePathEdgeIds.has(e.id),
+        color: { color: e.isMain ? '#2eaadc' : '#e74c3c', opacity: 1.0 }
+      }));
       edgesDataSet.update(edgeUpdates);
 
-      // 2. Làm mờ các Nút không thuộc luồng
       const nodeUpdates = nodesDataSet.get().map(n => ({
         id: n.id,
         opacity: activePathNodeIds.has(n.id) ? 1.0 : 0.25
@@ -454,10 +436,8 @@
       btnNote.innerText = "📝 Xem Ghi Chú";
     }
 
-    // LOGIC DOUBLE CLICK
     function handleDoubleClick(nodeId) {
       if (currentMode === 1) {
-        // DẠNG 1: CLICK ĐÚP -> XÓA SẠCH LUỒNG VỀ LẠI BẢN ĐỒ BAN ĐẦU
         activePathNodeIds.clear();
         activePathEdgeIds.clear();
         hideAllEdges();
@@ -489,11 +469,7 @@
     function showOnlyMainEdges() {
       const updates = edgesDataSet.get().map(e => {
         const isMainOrImportant = e.isMain || e.isImportant;
-        return {
-          id: e.id,
-          hidden: !isMainOrImportant,
-          color: { color: '#2eaadc', opacity: 1 }
-        };
+        return { id: e.id, hidden: !isMainOrImportant, color: { color: '#2eaadc', opacity: 1 } };
       });
       edgesDataSet.update(updates);
     }
@@ -502,7 +478,6 @@
       const updates = edgesDataSet.get().map(e => {
         const isMainOrImportant = e.isMain || e.isImportant;
         const isConnectedToTarget = (e.from === targetNodeId || e.to === targetNodeId);
-        
         if (isMainOrImportant) {
           return { id: e.id, hidden: false, color: { color: '#2eaadc', opacity: 1 } };
         } else if (isConnectedToTarget) {
