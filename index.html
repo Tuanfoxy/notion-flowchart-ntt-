@@ -75,7 +75,7 @@
     <input type="text" id="search-input" placeholder="🔍 Tìm nút..." oninput="handleSearch(this.value)">
     <button class="btn" onclick="resetView()">🔄 Reset</button>
     <button class="btn" onclick="toggleDarkMode()">🌙/☀️</button>
-    <span class="status-guide" id="guide-text">Mặc định: Chỉ hiện đường chính | Đúp click: Mở đường phụ</span>
+    <span class="status-guide" id="guide-text">Mặc định: Chỉ hiện đường chính | Click đúp: Mở đường phụ</span>
   </div>
 
   <div id="main-container">
@@ -92,10 +92,10 @@
     let edgesDataSet = new vis.DataSet();
     
     // TRẠNG THÁI HỆ THỐNG
-    let currentMode = 2; // MẶC ĐỊNH LÀ DẠNG 2 (HỆ THỐNG THÔNG TIN)
+    let currentMode = 2; // MẶC ĐỊNH DẠNG 2 (HỆ THỐNG THÔNG TIN)
     let isActiveRecall = false;
-    let lockedNodeId = null; // Nút đang được khóa đường đi
-    let activeSecondaryNodeId = null; // Nút đang mở liên kết phụ (Dạng 2)
+    let lockedNodeId = null;
+    let activeSecondaryNodeId = null;
     let clickTimeout = null;
 
     // DỮ LIỆU MẪU CÓ CẤU TRÚC MAIN vs SECONDARY
@@ -109,16 +109,16 @@
         { "id": 6, "label": "Tiết Beta-lactamase", "level": 2, "group": "resistance", "tooltip": "💡 Cơ chế đề kháng", "detail": "<h3>✂️ Beta-lactamase</h3><p>Thủy phân vòng beta-lactam.</p>" }
       ],
       "edges": [
-        // Ý CHÍNH (isMain: true) -> Nét liền đậm, có mũi tên
+        // LUỒNG CHÍNH (isMain: true) -> Nét liền đậm, có mũi tên
         { "id": "e1-2", "from": 1, "to": 2, "label": "Chứa", "isMain": true },
         { "id": "e1-3", "from": 1, "to": 3, "label": "Bao bọc", "isMain": true },
         { "id": "e4-5", "from": 4, "to": 5, "label": "Cơ chế chính", "isMain": true },
         { "id": "e5-3", "from": 5, "to": 3, "label": "Phá hủy vách", "isMain": true },
         
-        // Ý PHỤ / LIÊN KẾT CHÉO (isMain: false) -> Nét đứt mảnh, KHÔNG mũi tên
+        // LUỒNG PHỤ (isMain: false) -> Nét đứt mảnh, KHÔNG mũi tên
         { "id": "e4-2", "from": 4, "to": 2, "label": "Thấm qua", "isMain": false },
         
-        // LIÊN KẾT CHÉO MẬT THIẾT QUAN TRỌNG (isMain: false nhưng isImportant: true) -> Coi như đường chính!
+        // LIÊN KẾT CHÉO QUAN TRỌNG (isMain: false, isImportant: true) -> Coi như đường chính
         { "id": "e6-4", "from": 6, "to": 4, "label": "Đề kháng mạnh", "isMain": false, "isImportant": true }
       ]
     };
@@ -132,7 +132,7 @@
     };
 
     function initNetwork() {
-      // BƯỚC 1: XỬ LÝ NODES
+      // 1. PROCESS NODES
       const processedNodes = rawData.nodes.map(node => {
         const isLevel1 = node.level === 1;
         const colorConfig = groupColors[node.group] || { background: '#ffffff', border: '#cccccc', fontColor: '#2f3437' };
@@ -152,7 +152,7 @@
         };
       });
 
-      // BƯỚC 2: XỬ LÝ EDGES THEO QUY TẮC NÉT VẼ
+      // 2. PROCESS EDGES
       const processedEdges = rawData.edges.map(edge => {
         const isMainOrImportant = edge.isMain || edge.isImportant;
         return {
@@ -162,9 +162,9 @@
           label: edge.label,
           isMain: edge.isMain,
           isImportant: edge.isImportant,
-          width: isMainOrImportant ? 3 : 1.2,                 // Đậm vs Mảnh
-          dashes: isMainOrImportant ? false : [5, 5],            // Liền vs Đứt
-          arrows: isMainOrImportant ? 'to' : '',                 // Có mũi tên vs KHÔNG mũi tên
+          width: isMainOrImportant ? 3 : 1.2,
+          dashes: isMainOrImportant ? false : [5, 5],
+          arrows: isMainOrImportant ? 'to' : '',
           color: { color: isMainOrImportant ? '#2eaadc' : '#999999', opacity: 1 },
           font: { size: 10, align: 'middle' },
           smooth: { type: 'cubicBezier', forceDirection: 'horizontal' }
@@ -181,29 +181,16 @@
         layout: {
           hierarchical: { enabled: true, direction: 'LR', sortMethod: 'directed', nodeSpacing: 160, levelSeparation: 220 }
         },
-        physics: { enabled: false },
-        interaction: { hover: true }
+        physics: { enabled: false }, // Tắt hoàn toàn vật lý -> Đứng yên tuyệt đối
+        interaction: { hover: false } // ĐÃ TẮT HOÀN TOÀN HOVER TẢI DƯ THỪA
       };
 
       network = new vis.Network(container, data, options);
 
-      // THIẾT LẬP DẠNG HIỂN THỊ MẶC ĐỊNH LÀ DẠNG 2
+      // Áp dụng dạng mặc định khi mới mở (Dạng 2)
       applyModeRules();
 
-      // BẮT SỰ KIỆN HOVER (DẠNG 1)
-      network.on("hoverNode", function (params) {
-        if (currentMode === 1 && !lockedNodeId) {
-          showConnectionsForNode(params.node, 0.4, false); // Hiện mờ tạm thời
-        }
-      });
-
-      network.on("blurNode", function () {
-        if (currentMode === 1 && !lockedNodeId) {
-          hideAllEdges(); // Rê chuột ra thì ẩn lại
-        }
-      });
-
-      // BẮT SỰ KIỆN CLICK DƠN & DOUBLE CLICK (XỬ LÝ KHÔNG BỊ XUNG ĐỘT)
+      // BẮT SỰ KIỆN CLICK ĐƠN & DOUBLE CLICK
       network.on("click", function (params) {
         if (clickTimeout) clearTimeout(clickTimeout);
 
@@ -214,11 +201,11 @@
           } else {
             handleBackgroundClick();
           }
-        }, 220); // Đợi 220ms để phân biệt với double click
+        }, 220);
       });
 
       network.on("doubleClick", function (params) {
-        if (clickTimeout) clearTimeout(clickTimeout); // Hủy single click nếu là double click
+        if (clickTimeout) clearTimeout(clickTimeout);
         if (params.nodes.length > 0) {
           const nodeId = params.nodes[0];
           handleDoubleClick(nodeId);
@@ -226,8 +213,7 @@
       });
     }
 
-    // --- CÁC HÀM ĐIỀU KHIỂN DẠNG HIỂN THỊ ---
-
+    // DIEÙ KHIỂN DẠNG HIỂN THỊ
     function applyModeRules() {
       lockedNodeId = null;
       activeSecondaryNodeId = null;
@@ -237,7 +223,7 @@
         // DẠNG 1: BẢN ĐỒ THÔNG TIN -> Ban đầu ẨN 100% liên kết
         hideAllEdges();
       } else if (currentMode === 2) {
-        // DẠNG 2: HỆ THỐNG THÔNG TIN -> Chỉ hiện liên kết CHÍNH / QUAN TRỌNG
+        // DẠNG 2: HỆ THỐNG THÔNG TIN -> Chỉ hiện liên kết CHÍNH
         showOnlyMainEdges();
       }
     }
@@ -250,7 +236,7 @@
       if (currentMode === 1) {
         btn.innerText = "📍 Dạng 1: Bản đồ";
         btn.classList.remove('active');
-        guide.innerText = "Hover: Mờ tạm thời | Click 1: Rõ & Khóa | Click đúp: Hủy";
+        guide.innerText = "Click 1: Hiện rõ đường đi | Click đúp: Hủy đường đi";
       } else {
         btn.innerText = "🌐 Dạng 2: Hệ thống";
         btn.classList.add('active');
@@ -266,7 +252,7 @@
       openDrawer(nodeData.detail);
 
       if (currentMode === 1) {
-        // DẠNG 1: Click 1 cái -> Hiện đường đi RÕ NÉT & KHÓA LẠI
+        // DẠNG 1: Click 1 cái -> Hiện đường đi RÕ NÉT & KHÓA LẠI
         lockedNodeId = nodeId;
         showConnectionsForNode(nodeId, 1.0, true);
       } else if (currentMode === 2) {
@@ -278,7 +264,7 @@
     // LOGIC DOUBLE CLICK
     function handleDoubleClick(nodeId) {
       if (currentMode === 1) {
-        // DẠNG 1: Click đúp -> HỦY KHÓA ĐƯỜNG ĐI (Quay về ẩn hết)
+        // DẠNG 1: Click đúp -> HỦY KHÓA ĐƯỜNG ĐI (Thu hồi về dạng ẩn hết)
         lockedNodeId = null;
         hideAllEdges();
         resetNodesOpacity();
@@ -299,8 +285,7 @@
       applyModeRules();
     }
 
-    // --- HÀM ẨN / HIỆN ĐƯỜNG VẼ CHI TIẾT ---
-
+    // ẨN / HIỆN ĐƯỜNG VẼ
     function hideAllEdges() {
       const updates = edgesDataSet.get().map(e => ({ id: e.id, hidden: true }));
       edgesDataSet.update(updates);
@@ -326,7 +311,7 @@
         if (isMainOrImportant) {
           return { id: e.id, hidden: false, color: { color: '#2eaadc', opacity: 1 } };
         } else if (isConnectedToTarget) {
-          return { id: e.id, hidden: false, color: { color: '#e74c3c', opacity: 1 } }; // Hiện đường phụ màu đỏ rực
+          return { id: e.id, hidden: false, color: { color: '#e74c3c', opacity: 1 } };
         } else {
           return { id: e.id, hidden: true };
         }
@@ -339,7 +324,6 @@
       const connectedNodes = network.getConnectedNodes(nodeId);
       connectedNodes.push(nodeId);
 
-      // Cập nhật Edges
       const edgeUpdates = edgesDataSet.get().map(e => {
         if (connectedEdges.includes(e.id)) {
           return { id: e.id, hidden: false, color: { color: e.isMain ? '#2eaadc' : '#e74c3c', opacity: opacityLevel } };
@@ -349,7 +333,6 @@
       });
       edgesDataSet.update(edgeUpdates);
 
-      // Cập nhật Nodes nếu cần mờ xung quanh
       if (dimOthers) {
         const nodeUpdates = nodesDataSet.get().map(n => ({
           id: n.id,
@@ -374,8 +357,7 @@
       nodesDataSet.update(updates);
     }
 
-    // --- CÁC TÍNH NĂNG PHỤ TRỢ ---
-
+    // TÍNH NĂNG PHỤ TRỢ
     function toggleActiveRecall() {
       isActiveRecall = !isActiveRecall;
       document.getElementById('btn-recall').classList.toggle('active', isActiveRecall);
