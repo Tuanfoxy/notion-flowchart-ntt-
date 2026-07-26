@@ -32,19 +32,23 @@
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
-      padding: 0 12px;
-      gap: 8px;
+      padding: 0 10px;
+      gap: 6px;
       z-index: 10;
     }
     .btn {
-      padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border-color);
+      padding: 6px 9px; border-radius: 4px; border: 1px solid var(--border-color);
       background: var(--bg-color); color: var(--text-color); cursor: pointer; font-size: 12px; font-weight: 600;
       transition: all 0.2s ease;
     }
-    .btn:hover { background: var(--accent-color); color: white; border-color: var(--accent-color); }
+    .btn:hover:not(:disabled) { background: var(--accent-color); color: white; border-color: var(--accent-color); }
     .btn.active { background: var(--accent-color); color: white; }
-    
-    /* NÚT GHI CHÚ NỔI BẬT THÔNG MINH */
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* NÚT HOÀN TÁC (UNDO / REDO) */
+    .btn-nav { font-size: 12px; padding: 6px 8px; }
+
+    /* NÚT GHI CHÚ SMARTER */
     .btn-note {
       opacity: 0.4;
       pointer-events: none;
@@ -63,13 +67,13 @@
 
     @keyframes pulse-glow {
       0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); }
-      70% { box-shadow: 0 0 0 7px rgba(255, 152, 0, 0); }
+      70% { box-shadow: 0 0 0 6px rgba(255, 152, 0, 0); }
       100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
     }
 
     #search-input {
-      padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border-color);
-      background: var(--bg-color); color: var(--text-color); font-size: 12px; outline: none; width: 110px;
+      padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border-color);
+      background: var(--bg-color); color: var(--text-color); font-size: 12px; outline: none; width: 100px;
     }
 
     #main-container { width: 100%; height: calc(100vh - 50px); min-height: 550px; position: relative; display: flex; }
@@ -94,6 +98,8 @@
 
   <div id="toolbar">
     <button class="btn active" id="btn-mode" onclick="cycleMode()">🌐 Dạng 2: Hệ thống</button>
+    <button class="btn btn-nav" id="btn-undo" onclick="undoState()" disabled>◀ Trước</button>
+    <button class="btn btn-nav" id="btn-redo" onclick="redoState()" disabled>Sau ▶</button>
     <button class="btn btn-note" id="btn-note" onclick="toggleDrawerForSelected()">📝 Xem Ghi Chú</button>
     <button class="btn" id="btn-recall" onclick="toggleActiveRecall()">❓ Active Recall</button>
     <input type="text" id="search-input" placeholder="🔍 Tìm nút..." oninput="handleSearch(this.value)">
@@ -115,22 +121,28 @@
     let nodesDataSet = new vis.DataSet();
     let edgesDataSet = new vis.DataSet();
     
-    let currentMode = 2; 
+    let currentMode = 2; // MẶC ĐỊNH DẠNG 2 (HỆ THỐNG THÔNG TIN)
     let isActiveRecall = false;
     let selectedNodeData = null;
     let activeSecondaryNodeId = null;
     let clickTimeout = null;
 
+    // TẬP HỢP ĐƯỜNG ĐI LŨY TIẾN DẠNG 1
     let activePathNodeIds = new Set();
     let activePathEdgeIds = new Set();
 
+    // HỆ THỐNG LỊCH SỬ THAO TÁC (UNDO / REDO)
+    let historyStack = [];
+    let historyIndex = -1;
+    let isNavigatingHistory = false;
+
+    // QUẢN LÝ XOAY 360° BẰNG CHUỘT & ĐIỆN THOẠI (TOUCH)
     let basePositions = null;
     let centerPos = { x: 0, y: 0 };
     let isRotating = false;
     let startAngle = 0;
     let currentRotation = 0;
 
-    // DỮ LIỆU CHỮA CHÁY MẶC ĐỊNH (KHI KHÔNG CÓ THAM SỐ ?lesson=)
     const defaultData = {
       "nodes": [
         { "id": 1, "label": "Vi khuẩn Gram-âm", "level": 1, "group": "target", "tooltip": "💡 Nút chính Bậc 1", "detail": "<h3>📌 Vi khuẩn Gram-âm</h3><p>Có vách tế bào kép đặc trưng gồm màng ngoài và peptidoglycan.</p>" },
@@ -158,7 +170,6 @@
       resistance: { background: '#ffebee', border: '#ef5350', fontColor: '#2f3437' }
     };
 
-    // HÀM TỰ ĐỘNG ĐỌC FILE JSON BÀI HỌC TỪ DÒNG ĐƯỜNG DẪN URL (?lesson=...)
     async function fetchLessonData() {
       const urlParams = new URLSearchParams(window.location.search);
       const jsonPath = urlParams.get('lesson');
@@ -238,14 +249,36 @@
 
       applyModeRules();
       setupInteractiveRotation();
+      saveHistoryState(); // Khởi tạo trạng thái ban đầu
 
+      // BẮT SỰ KIỆN CLICK CHUỘT THÔNG MINH
       network.on("click", function (params) {
         if (clickTimeout) clearTimeout(clickTimeout);
+
         clickTimeout = setTimeout(() => {
           if (params.nodes.length > 0) {
             handleSingleClick(params.nodes[0]);
           } else {
-            handleBackgroundClick();
+            // KIỂM TRA BÁN KÍNH ĐỆM AN TOÀN CHỐNG ẤN NHẦM MÉP VIỀN (70px)
+            const clickPos = params.pointer.canvas;
+            const positions = network.getPositions();
+            let nearestNodeId = null;
+            let minDistance = Infinity;
+
+            for (let id in positions) {
+              const nodePos = positions[id];
+              const dist = Math.hypot(clickPos.x - nodePos.x, clickPos.y - nodePos.y);
+              if (dist < minDistance) {
+                minDistance = dist;
+                nearestNodeId = Number(id);
+              }
+            }
+
+            if (minDistance < 70 && nearestNodeId) {
+              handleSingleClick(nearestNodeId); // Bán kính mép viền -> Coi như ấn vào nút
+            } else {
+              handleBackgroundClick(); // Khoảng trắng thực sự -> Đóng sơ đồ
+            }
           }
         }, 220);
       });
@@ -338,6 +371,98 @@
       nodesDataSet.update(updates);
     }
 
+    // --- QUẢN LÝ LỊCH SỬ THAO TÁC (UNDO / REDO) ---
+    function saveHistoryState() {
+      if (isNavigatingHistory) return;
+
+      const state = {
+        mode: currentMode,
+        selectedNodeId: selectedNodeData ? selectedNodeData.id : null,
+        activePathNodes: Array.from(activePathNodeIds),
+        activePathEdges: Array.from(activePathEdgeIds),
+        activeSecondaryNodeId: activeSecondaryNodeId,
+        drawerOpen: document.getElementById('drawer').classList.contains('open')
+      };
+
+      if (historyIndex < historyStack.length - 1) {
+        historyStack = historyStack.slice(0, historyIndex + 1);
+      }
+
+      historyStack.push(state);
+      historyIndex = historyStack.length - 1;
+      updateHistoryButtonsUI();
+    }
+
+    function restoreState(state) {
+      isNavigatingHistory = true;
+
+      if (currentMode !== state.mode) {
+        currentMode = state.mode;
+        updateModeUI();
+      }
+
+      activePathNodeIds = new Set(state.activePathNodes);
+      activePathEdgeIds = new Set(state.activePathEdges);
+      activeSecondaryNodeId = state.activeSecondaryNodeId;
+
+      if (state.selectedNodeId) {
+        selectedNodeData = nodesDataSet.get(state.selectedNodeId);
+        const btnNote = document.getElementById('btn-note');
+        btnNote.classList.add('ready');
+        btnNote.innerText = `📝 Ghi chú: ${selectedNodeData.originalLabel}`;
+      } else {
+        deselectNodeUI();
+      }
+
+      if (currentMode === 1) {
+        if (activePathNodeIds.size > 0) {
+          renderMode1Path();
+        } else {
+          hideAllEdges();
+          resetNodesOpacity();
+        }
+      } else if (currentMode === 2) {
+        if (activeSecondaryNodeId) {
+          showMainAndSpecificSecondaryEdges(activeSecondaryNodeId);
+        } else {
+          showOnlyMainEdges();
+        }
+        if (state.selectedNodeId) {
+          highlightPath(state.selectedNodeId);
+        } else {
+          resetNodesOpacity();
+        }
+      }
+
+      if (state.drawerOpen && selectedNodeData) {
+        openDrawer(selectedNodeData.detail);
+      } else {
+        closeDrawer();
+      }
+
+      isNavigatingHistory = false;
+      updateHistoryButtonsUI();
+    }
+
+    function undoState() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        restoreState(historyStack[historyIndex]);
+      }
+    }
+
+    function redoState() {
+      if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        restoreState(historyStack[historyIndex]);
+      }
+    }
+
+    function updateHistoryButtonsUI() {
+      document.getElementById('btn-undo').disabled = (historyIndex <= 0);
+      document.getElementById('btn-redo').disabled = (historyIndex >= historyStack.length - 1);
+    }
+
     function applyModeRules() {
       activeSecondaryNodeId = null;
       activePathNodeIds.clear();
@@ -352,8 +477,7 @@
       }
     }
 
-    function cycleMode() {
-      currentMode = (currentMode === 2) ? 1 : 2;
+    function updateModeUI() {
       const btn = document.getElementById('btn-mode');
       const guide = document.getElementById('guide-text');
 
@@ -366,10 +490,17 @@
         btn.classList.add('active');
         guide.innerText = "Mặc định: Chỉ hiện đường chính | Click đúp: Mở đường phụ";
       }
-      closeDrawer();
-      applyModeRules();
     }
 
+    function cycleMode() {
+      currentMode = (currentMode === 2) ? 1 : 2;
+      updateModeUI();
+      closeDrawer();
+      applyModeRules();
+      saveHistoryState();
+    }
+
+    // LOGIC SINGLE CLICK
     function handleSingleClick(nodeId) {
       selectedNodeData = nodesDataSet.get(nodeId);
 
@@ -378,30 +509,16 @@
       btnNote.innerText = `📝 Ghi chú: ${selectedNodeData.originalLabel}`;
 
       if (currentMode === 1) {
-        if (activePathNodeIds.has(nodeId)) {
-          extendMode1Path(nodeId);
-        } else {
-          startMode1Path(nodeId);
-        }
+        // GIỮ NGUYÊN HOÀN TOÀN LUỒNG CŨ & CỘNG DỒN LUỒNG MỚI (TÍCH LŨY THÊM)
+        activePathNodeIds.add(nodeId);
+        network.getConnectedNodes(nodeId).forEach(id => activePathNodeIds.add(id));
+        network.getConnectedEdges(nodeId).forEach(id => activePathEdgeIds.add(id));
+        renderMode1Path();
       } else if (currentMode === 2) {
         highlightPath(nodeId);
       }
-    }
 
-    function startMode1Path(nodeId) {
-      activePathNodeIds.clear();
-      activePathEdgeIds.clear();
-      activePathNodeIds.add(nodeId);
-      network.getConnectedNodes(nodeId).forEach(id => activePathNodeIds.add(id));
-      network.getConnectedEdges(nodeId).forEach(id => activePathEdgeIds.add(id));
-      renderMode1Path();
-    }
-
-    function extendMode1Path(nodeId) {
-      activePathNodeIds.add(nodeId);
-      network.getConnectedNodes(nodeId).forEach(id => activePathNodeIds.add(id));
-      network.getConnectedEdges(nodeId).forEach(id => activePathEdgeIds.add(id));
-      renderMode1Path();
+      saveHistoryState();
     }
 
     function renderMode1Path() {
@@ -427,6 +544,7 @@
       } else {
         openDrawer(selectedNodeData.detail);
       }
+      saveHistoryState();
     }
 
     function deselectNodeUI() {
@@ -436,6 +554,7 @@
       btnNote.innerText = "📝 Xem Ghi Chú";
     }
 
+    // LOGIC DOUBLE CLICK
     function handleDoubleClick(nodeId) {
       if (currentMode === 1) {
         activePathNodeIds.clear();
@@ -453,12 +572,14 @@
           showMainAndSpecificSecondaryEdges(nodeId);
         }
       }
+      saveHistoryState();
     }
 
     function handleBackgroundClick() {
       closeDrawer();
       deselectNodeUI();
       applyModeRules();
+      saveHistoryState();
     }
 
     function hideAllEdges() {
@@ -535,6 +656,7 @@
       network.fit({ animation: { duration: 300 } }); 
       applyModeRules(); 
       closeDrawer(); 
+      saveHistoryState();
     }
     
     function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
