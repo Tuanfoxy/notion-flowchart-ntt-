@@ -118,12 +118,15 @@
     let edgesDataSet = new vis.DataSet();
     
     // TRẠNG THÁI HỆ THỐNG
-    let currentMode = 2; 
+    let currentMode = 2; // MẶC ĐỊNH DẠNG 2 (HỆ THỐNG THÔNG TIN)
     let isActiveRecall = false;
-    let lockedNodeId = null;
     let selectedNodeData = null;
     let activeSecondaryNodeId = null;
     let clickTimeout = null;
+
+    // TẬP HỢP CÁC NÚT VÀ ĐƯỜNG ĐI ĐANG TÍCH LŨY Ở DẠNG 1 (BẢN ĐỒ THÔNG TIN)
+    let activePathNodeIds = new Set();
+    let activePathEdgeIds = new Set();
 
     // QUẢN LÝ XOAY 360° BẰNG CHUỘT & ĐIỆN THOẠI (TOUCH)
     let basePositions = null;
@@ -264,7 +267,6 @@
       const container = document.getElementById('network');
       container.addEventListener('contextmenu', e => e.preventDefault());
 
-      // 1. DÀNH CHO MÁY TÍNH (CHUỘT PHẢI / SHIFT)
       container.addEventListener('mousedown', (e) => {
         if (e.button === 2 || (e.button === 0 && e.shiftKey)) {
           isRotating = true;
@@ -287,7 +289,6 @@
 
       window.addEventListener('mouseup', () => { isRotating = false; });
 
-      // 2. DÀNH CHO ĐIỆN THOẠI / TABLET (CỬ CHỈ 2 NGÓN TAY XOAY)
       container.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2) {
           isRotating = true;
@@ -334,8 +335,9 @@
     }
 
     function applyModeRules() {
-      lockedNodeId = null;
       activeSecondaryNodeId = null;
+      activePathNodeIds.clear();
+      activePathEdgeIds.clear();
       deselectNodeUI();
       resetNodesOpacity();
 
@@ -354,7 +356,7 @@
       if (currentMode === 1) {
         btn.innerText = "📍 Dạng 1: Bản đồ";
         btn.classList.remove('active');
-        guide.innerText = "Click 1: Hiện rõ đường đi | Click đúp: Hủy đường đi";
+        guide.innerText = "Click 1: Nối lũy tiến luồng | Click đúp: Xóa luồng";
       } else {
         btn.innerText = "🌐 Dạng 2: Hệ thống";
         btn.classList.add('active');
@@ -364,6 +366,7 @@
       applyModeRules();
     }
 
+    // LOGIC SINGLE CLICK
     function handleSingleClick(nodeId) {
       selectedNodeData = nodesDataSet.get(nodeId);
 
@@ -372,11 +375,66 @@
       btnNote.innerText = `📝 Ghi chú: ${selectedNodeData.originalLabel}`;
 
       if (currentMode === 1) {
-        lockedNodeId = nodeId;
-        showConnectionsForNode(nodeId, 1.0, true);
+        // KIỂM TRA NẾU NÚT CLICK ĐÃ NẰM TRONG LUỒNG KIẾN THỨC HIỆN TẠI
+        if (activePathNodeIds.has(nodeId)) {
+          // NỐI DÀI LUỒNG KIẾN THỨC (TÍCH LŨY THÊM)
+          extendMode1Path(nodeId);
+        } else {
+          // BẮT ĐẦU MỘT LUỒNG KIẾN THỨC MỚI
+          startMode1Path(nodeId);
+        }
       } else if (currentMode === 2) {
         highlightPath(nodeId);
       }
+    }
+
+    // CÁC HÀM XỬ LÝ LŨY TIẾN CHO DẠNG 1 (BẢN ĐỒ THÔNG TIN)
+    function startMode1Path(nodeId) {
+      activePathNodeIds.clear();
+      activePathEdgeIds.clear();
+
+      activePathNodeIds.add(nodeId);
+      const connectedNodes = network.getConnectedNodes(nodeId);
+      connectedNodes.forEach(id => activePathNodeIds.add(id));
+
+      const connectedEdges = network.getConnectedEdges(nodeId);
+      connectedEdges.forEach(id => activePathEdgeIds.add(id));
+
+      renderMode1Path();
+    }
+
+    function extendMode1Path(nodeId) {
+      activePathNodeIds.add(nodeId);
+      const connectedNodes = network.getConnectedNodes(nodeId);
+      connectedNodes.forEach(id => activePathNodeIds.add(id));
+
+      const connectedEdges = network.getConnectedEdges(nodeId);
+      connectedEdges.forEach(id => activePathEdgeIds.add(id));
+
+      renderMode1Path();
+    }
+
+    function renderMode1Path() {
+      // 1. Cập nhật hiển thị Edges
+      const edgeUpdates = edgesDataSet.get().map(e => {
+        if (activePathEdgeIds.has(e.id)) {
+          return { 
+            id: e.id, 
+            hidden: false, 
+            color: { color: e.isMain ? '#2eaadc' : '#e74c3c', opacity: 1.0 } 
+          };
+        } else {
+          return { id: e.id, hidden: true };
+        }
+      });
+      edgesDataSet.update(edgeUpdates);
+
+      // 2. Làm mờ các Nút không thuộc luồng
+      const nodeUpdates = nodesDataSet.get().map(n => ({
+        id: n.id,
+        opacity: activePathNodeIds.has(n.id) ? 1.0 : 0.25
+      }));
+      nodesDataSet.update(nodeUpdates);
     }
 
     function toggleDrawerForSelected() {
@@ -396,9 +454,12 @@
       btnNote.innerText = "📝 Xem Ghi Chú";
     }
 
+    // LOGIC DOUBLE CLICK
     function handleDoubleClick(nodeId) {
       if (currentMode === 1) {
-        lockedNodeId = null;
+        // DẠNG 1: CLICK ĐÚP -> XÓA SẠCH LUỒNG VỀ LẠI BẢN ĐỒ BAN ĐẦU
+        activePathNodeIds.clear();
+        activePathEdgeIds.clear();
         hideAllEdges();
         resetNodesOpacity();
         deselectNodeUI();
@@ -451,29 +512,6 @@
         }
       });
       edgesDataSet.update(updates);
-    }
-
-    function showConnectionsForNode(nodeId, opacityLevel, dimOthers) {
-      const connectedEdges = network.getConnectedEdges(nodeId);
-      const connectedNodes = network.getConnectedNodes(nodeId);
-      connectedNodes.push(nodeId);
-
-      const edgeUpdates = edgesDataSet.get().map(e => {
-        if (connectedEdges.includes(e.id)) {
-          return { id: e.id, hidden: false, color: { color: e.isMain ? '#2eaadc' : '#e74c3c', opacity: opacityLevel } };
-        } else {
-          return { id: e.id, hidden: true };
-        }
-      });
-      edgesDataSet.update(edgeUpdates);
-
-      if (dimOthers) {
-        const nodeUpdates = nodesDataSet.get().map(n => ({
-          id: n.id,
-          opacity: connectedNodes.includes(n.id) ? 1.0 : 0.25
-        }));
-        nodesDataSet.update(nodeUpdates);
-      }
     }
 
     function highlightPath(selectedNodeId) {
