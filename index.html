@@ -149,8 +149,9 @@
     let activePathNodeIds = new Set();
     let activePathEdgeIds = new Set();
 
-    // TẬP HỢP CÁC CẤP ĐỘ PHÂN CẤP SƠ ĐỒ CON (MAP SCOPE STACK)
-    let mapScopeStack = [];
+    // TẬP HỢP CẤP ĐỘ SƠ ĐỒ CON (ĐỘC LẬP HOÀN TOÀN VỚI DẠNG HIỂN THỊ)
+    let currentSubMapNodeIds = null; // null = Sơ đồ lớn gốc
+    let mapScopeStack = [];          // Stack lưu lịch sử các cấp sơ đồ con
 
     // HỆ THỐNG LỊCH SỬ THAO TÁC (UNDO / REDO)
     let historyStack = [];
@@ -394,41 +395,95 @@
       nodesDataSet.update(updates);
     }
 
-    // --- QUẢN LÝ QUAY VỀ SƠ ĐỒ LỚN THEO CẤP BẰNG MAP SCOPE STACK ---
-    function saveMapScope() {
-      const nodeVisibility = {};
-      nodesDataSet.get().forEach(n => {
-        nodeVisibility[n.id] = { hidden: !!n.hidden, opacity: n.opacity !== undefined ? n.opacity : 1.0 };
+    // --- BỘ ĐỘNG CƠ ĐIỀU KHIỂN HIỂN THỊ CHUẨN CẤP ĐỘ (MODE 1 & MODE 2) ---
+    function renderMode2() {
+      // 1. Cập nhật Nodes theo SubMap scope
+      const nodeUpdates = nodesDataSet.get().map(n => {
+        const isVisibleInScope = !currentSubMapNodeIds || currentSubMapNodeIds.has(n.id);
+        return { id: n.id, hidden: !isVisibleInScope, opacity: 1.0 };
       });
-      const edgeVisibility = {};
-      edgesDataSet.get().forEach(e => {
-        edgeVisibility[e.id] = { hidden: !!e.hidden, color: e.color };
-      });
-      mapScopeStack.push({ nodeVisibility, edgeVisibility });
-    }
-
-    function restoreMapScope(scope) {
-      const nodeUpdates = [];
-      for (let id in scope.nodeVisibility) {
-        nodeUpdates.push({
-          id: Number(id),
-          hidden: scope.nodeVisibility[id].hidden,
-          opacity: scope.nodeVisibility[id].opacity
-        });
-      }
       nodesDataSet.update(nodeUpdates);
 
-      const edgeUpdates = [];
-      for (let id in scope.edgeVisibility) {
-        edgeUpdates.push({
-          id: id,
-          hidden: scope.edgeVisibility[id].hidden,
-          color: scope.edgeVisibility[id].color
-        });
-      }
+      // 2. Cập nhật Edges theo SubMap scope & Quy tắc Mode 2
+      const edgeUpdates = edgesDataSet.get().map(e => {
+        const fromVisible = !currentSubMapNodeIds || currentSubMapNodeIds.has(e.from);
+        const toVisible = !currentSubMapNodeIds || currentSubMapNodeIds.has(e.to);
+        const isScopeVisible = fromVisible && toVisible;
+
+        if (!isScopeVisible) {
+          return { id: e.id, hidden: true };
+        }
+
+        const isMainOrImportant = e.isMain || e.isImportant;
+        if (activeSecondaryNodeId) {
+          const isConnectedToTarget = (e.from === activeSecondaryNodeId || e.to === activeSecondaryNodeId);
+          if (isMainOrImportant) {
+            return { id: e.id, hidden: false, color: { color: '#2eaadc', opacity: 1 } };
+          } else if (isConnectedToTarget) {
+            return { id: e.id, hidden: false, color: { color: '#e74c3c', opacity: 1 } };
+          } else {
+            return { id: e.id, hidden: true };
+          }
+        } else {
+          return { id: e.id, hidden: !isMainOrImportant, color: { color: '#2eaadc', opacity: 1 } };
+        }
+      });
       edgesDataSet.update(edgeUpdates);
     }
 
+    function renderMode1() {
+      const hasActivePath = activePathNodeIds.size > 0;
+
+      // 1. Cập nhật Nodes theo SubMap scope & Active Path
+      const nodeUpdates = nodesDataSet.get().map(n => {
+        const isVisibleInScope = !currentSubMapNodeIds || currentSubMapNodeIds.has(n.id);
+        return {
+          id: n.id,
+          hidden: !isVisibleInScope,
+          opacity: hasActivePath ? (activePathNodeIds.has(n.id) ? 1.0 : 0.25) : 1.0
+        };
+      });
+      nodesDataSet.update(nodeUpdates);
+
+      // 2. Cập nhật Edges theo SubMap scope & Active Path
+      const edgeUpdates = edgesDataSet.get().map(e => {
+        const fromVisible = !currentSubMapNodeIds || currentSubMapNodeIds.has(e.from);
+        const toVisible = !currentSubMapNodeIds || currentSubMapNodeIds.has(e.to);
+        const isScopeVisible = fromVisible && toVisible;
+
+        if (!isScopeVisible) {
+          return { id: e.id, hidden: true };
+        }
+
+        const isInPath = activePathEdgeIds.has(e.id);
+        return {
+          id: e.id,
+          hidden: !isInPath,
+          color: { color: e.isMain ? '#2eaadc' : '#e74c3c', opacity: 1.0 }
+        };
+      });
+      edgesDataSet.update(edgeUpdates);
+    }
+
+    function applyModeRules() {
+      if (lockedSourceNodeId) {
+        highlightLockedNode(lockedSourceNodeId, false);
+        lockedSourceNodeId = null;
+      }
+
+      activeSecondaryNodeId = null;
+      activePathNodeIds.clear();
+      activePathEdgeIds.clear();
+      deselectNodeUI();
+
+      if (currentMode === 1) {
+        renderMode1();
+      } else if (currentMode === 2) {
+        renderMode2();
+      }
+    }
+
+    // --- TÍNH NĂNG TẠO BẢN ĐỒ CON CHUẨN CẤP ĐỘ ---
     function handleNodeHold(nodeId) {
       if (!lockedSourceNodeId) {
         lockedSourceNodeId = nodeId;
@@ -476,78 +531,58 @@
     }
 
     function createSubMapForNode(rootId) {
-      saveMapScope(); // Lưu cấp độ sơ đồ hiện tại trước khi tạo sơ đồ con mới
+      // Lưu cấp độ sơ đồ con hiện tại vào Stack
+      mapScopeStack.push(currentSubMapNodeIds ? new Set(currentSubMapNodeIds) : null);
 
       const subNodes = new Set([rootId]);
-      const subEdges = new Set();
-
       function traverse(currentId) {
         const outEdges = edgesDataSet.get({ filter: e => e.from === currentId });
         outEdges.forEach(e => {
-          subEdges.add(e.id);
-          if (!subNodes.has(e.to)) {
-            subNodes.add(e.to);
-            traverse(e.to);
+          if (!currentSubMapNodeIds || currentSubMapNodeIds.has(e.to)) {
+            if (!subNodes.has(e.to)) {
+              subNodes.add(e.to);
+              traverse(e.to);
+            }
           }
         });
       }
       traverse(rootId);
 
-      nodesDataSet.update(nodesDataSet.get().map(n => ({
-        id: n.id,
-        hidden: !subNodes.has(n.id),
-        opacity: 1.0
-      })));
-
-      edgesDataSet.update(edgesDataSet.get().map(e => ({
-        id: e.id,
-        hidden: !subEdges.has(e.id),
-        color: { color: e.isMain ? '#2eaadc' : '#e74c3c', opacity: 1.0 }
-      })));
-
+      currentSubMapNodeIds = subNodes;
+      applyModeRules();
       setTimeout(() => network.fit({ animation: { duration: 400 } }), 100);
     }
 
     function createSubMapForPath(startId, endId) {
-      saveMapScope(); // Lưu cấp độ sơ đồ hiện tại trước khi tạo sơ đồ con mới
+      // Lưu cấp độ sơ đồ con hiện tại vào Stack
+      mapScopeStack.push(currentSubMapNodeIds ? new Set(currentSubMapNodeIds) : null);
 
       const pathNodes = new Set();
-      const pathEdges = new Set();
-
-      function findPaths(currentId, visitedNodes, visitedEdges) {
+      function findPaths(currentId, visitedNodes) {
         if (currentId === endId) {
           visitedNodes.forEach(n => pathNodes.add(n));
-          visitedEdges.forEach(e => pathEdges.add(e));
           return;
         }
 
         const outEdges = edgesDataSet.get({ filter: e => e.from === currentId });
         outEdges.forEach(e => {
-          if (!visitedNodes.includes(e.to)) {
-            findPaths(e.to, [...visitedNodes, e.to], [...visitedEdges, e.id]);
+          if (!currentSubMapNodeIds || currentSubMapNodeIds.has(e.to)) {
+            if (!visitedNodes.includes(e.to)) {
+              findPaths(e.to, [...visitedNodes, e.to]);
+            }
           }
         });
       }
 
-      findPaths(startId, [startId], []);
+      findPaths(startId, [startId]);
 
       if (pathNodes.size === 0) {
         pathNodes.add(startId);
         pathNodes.add(endId);
       }
 
-      nodesDataSet.update(nodesDataSet.get().map(n => ({
-        id: n.id,
-        hidden: !pathNodes.has(n.id),
-        opacity: 1.0
-      })));
-
-      edgesDataSet.update(edgesDataSet.get().map(e => ({
-        id: e.id,
-        hidden: !pathEdges.has(e.id),
-        color: { color: e.isMain ? '#2eaadc' : '#e74c3c', opacity: 1.0 }
-      })));
-
+      currentSubMapNodeIds = pathNodes;
+      applyModeRules();
       setTimeout(() => network.fit({ animation: { duration: 400 } }), 100);
     }
 
@@ -593,6 +628,7 @@
       }
     }
 
+    // --- LỊCH SỬ THAO TÁC UNDO / REDO ---
     function saveHistoryState() {
       if (isNavigatingHistory) return;
 
@@ -602,6 +638,8 @@
         activePathNodes: Array.from(activePathNodeIds),
         activePathEdges: Array.from(activePathEdgeIds),
         activeSecondaryNodeId: activeSecondaryNodeId,
+        currentSubMapNodes: currentSubMapNodeIds ? Array.from(currentSubMapNodeIds) : null,
+        mapScopeStackSnap: mapScopeStack.map(s => s ? Array.from(s) : null),
         drawerOpen: document.getElementById('drawer').classList.contains('open')
       };
 
@@ -617,10 +655,11 @@
     function restoreState(state) {
       isNavigatingHistory = true;
 
-      if (currentMode !== state.mode) {
-        currentMode = state.mode;
-        updateModeUI();
-      }
+      currentMode = state.mode;
+      updateModeUI();
+
+      currentSubMapNodeIds = state.currentSubMapNodes ? new Set(state.currentSubMapNodes) : null;
+      mapScopeStack = state.mapScopeStackSnap ? state.mapScopeStackSnap.map(s => s ? new Set(s) : null) : [];
 
       activePathNodeIds = new Set(state.activePathNodes);
       activePathEdgeIds = new Set(state.activePathEdges);
@@ -635,25 +674,7 @@
         deselectNodeUI();
       }
 
-      if (currentMode === 1) {
-        if (activePathNodeIds.size > 0) {
-          renderMode1Path();
-        } else {
-          hideAllEdges();
-          resetNodesOpacity();
-        }
-      } else if (currentMode === 2) {
-        if (activeSecondaryNodeId) {
-          showMainAndSpecificSecondaryEdges(activeSecondaryNodeId);
-        } else {
-          showOnlyMainEdges();
-        }
-        if (state.selectedNodeId) {
-          highlightPath(state.selectedNodeId);
-        } else {
-          resetNodesOpacity();
-        }
-      }
+      applyModeRules();
 
       if (state.drawerOpen && selectedNodeData) {
         openDrawer(selectedNodeData.detail);
@@ -684,26 +705,6 @@
       document.getElementById('btn-redo').disabled = (historyIndex >= historyStack.length - 1);
     }
 
-    function applyModeRules() {
-      if (lockedSourceNodeId) {
-        highlightLockedNode(lockedSourceNodeId, false);
-        lockedSourceNodeId = null;
-      }
-
-      mapScopeStack = []; // Xóa stack cấp độ sơ đồ con khi chủ động chuyển dạng
-      activeSecondaryNodeId = null;
-      activePathNodeIds.clear();
-      activePathEdgeIds.clear();
-      deselectNodeUI();
-      resetNodesOpacity();
-
-      if (currentMode === 1) {
-        hideAllEdges();
-      } else if (currentMode === 2) {
-        showOnlyMainEdges();
-      }
-    }
-
     function updateModeUI() {
       const btn = document.getElementById('btn-mode');
       const guide = document.getElementById('guide-text');
@@ -723,7 +724,7 @@
       currentMode = (currentMode === 2) ? 1 : 2;
       updateModeUI();
       closeDrawer();
-      applyModeRules();
+      applyModeRules(); // Chuyển Dạng giữ nguyên Cấp độ Sơ đồ Con
       saveHistoryState();
     }
 
@@ -738,27 +739,12 @@
         activePathNodeIds.add(nodeId);
         network.getConnectedNodes(nodeId).forEach(id => activePathNodeIds.add(id));
         network.getConnectedEdges(nodeId).forEach(id => activePathEdgeIds.add(id));
-        renderMode1Path();
+        renderMode1();
       } else if (currentMode === 2) {
         highlightPath(nodeId);
       }
 
       saveHistoryState();
-    }
-
-    function renderMode1Path() {
-      const edgeUpdates = edgesDataSet.get().map(e => ({
-        id: e.id,
-        hidden: !activePathEdgeIds.has(e.id),
-        color: { color: e.isMain ? '#2eaadc' : '#e74c3c', opacity: 1.0 }
-      }));
-      edgesDataSet.update(edgeUpdates);
-
-      const nodeUpdates = nodesDataSet.get().map(n => ({
-        id: n.id,
-        opacity: activePathNodeIds.has(n.id) ? 1.0 : 0.25
-      }));
-      nodesDataSet.update(nodeUpdates);
     }
 
     function toggleDrawerForSelected() {
@@ -783,18 +769,16 @@
       if (currentMode === 1) {
         activePathNodeIds.clear();
         activePathEdgeIds.clear();
-        hideAllEdges();
-        resetNodesOpacity();
+        renderMode1();
         deselectNodeUI();
         closeDrawer();
       } else if (currentMode === 2) {
         if (activeSecondaryNodeId === nodeId) {
           activeSecondaryNodeId = null;
-          showOnlyMainEdges();
         } else {
           activeSecondaryNodeId = nodeId;
-          showMainAndSpecificSecondaryEdges(nodeId);
         }
+        renderMode2();
       }
       saveHistoryState();
     }
@@ -806,34 +790,6 @@
       saveHistoryState();
     }
 
-    function hideAllEdges() {
-      const updates = edgesDataSet.get().map(e => ({ id: e.id, hidden: true }));
-      edgesDataSet.update(updates);
-    }
-
-    function showOnlyMainEdges() {
-      const updates = edgesDataSet.get().map(e => {
-        const isMainOrImportant = e.isMain || e.isImportant;
-        return { id: e.id, hidden: !isMainOrImportant, color: { color: '#2eaadc', opacity: 1 } };
-      });
-      edgesDataSet.update(updates);
-    }
-
-    function showMainAndSpecificSecondaryEdges(targetNodeId) {
-      const updates = edgesDataSet.get().map(e => {
-        const isMainOrImportant = e.isMain || e.isImportant;
-        const isConnectedToTarget = (e.from === targetNodeId || e.to === targetNodeId);
-        if (isMainOrImportant) {
-          return { id: e.id, hidden: false, color: { color: '#2eaadc', opacity: 1 } };
-        } else if (isConnectedToTarget) {
-          return { id: e.id, hidden: false, color: { color: '#e74c3c', opacity: 1 } };
-        } else {
-          return { id: e.id, hidden: true };
-        }
-      });
-      edgesDataSet.update(edgesDataSet);
-    }
-
     function highlightPath(selectedNodeId) {
       const connectedNodes = network.getConnectedNodes(selectedNodeId);
       connectedNodes.push(selectedNodeId);
@@ -841,11 +797,6 @@
         id: node.id,
         opacity: connectedNodes.includes(node.id) ? 1 : 0.25
       }));
-      nodesDataSet.update(updates);
-    }
-
-    function resetNodesOpacity() {
-      const updates = nodesDataSet.get().map(node => ({ id: node.id, opacity: 1 }));
       nodesDataSet.update(updates);
     }
 
@@ -869,22 +820,23 @@
       document.getElementById('drawer').classList.remove('open');
     }
 
-    // TÍNH NĂNG RESET THÔNG MINH (QUAY VỀ SƠ ĐỒ LỚN THEO CẤP)
+    // --- TÍNH NĂNG RESET THÔNG MINH (CHO PHÉP QUAY VỀ SƠ ĐỒ CON DÙ CHUYỂN DẠNG) ---
     function resetView() { 
       document.getElementById('search-input').value = "";
       
       if (mapScopeStack.length > 0) {
-        // NẾU ĐANG Ở SƠ ĐỒ CON -> BẤM RESET SẼ LẦN BƯỚC VỀ SƠ ĐỒ LỚN HƠN GẦN NHẤT
-        const previousScope = mapScopeStack.pop();
-        restoreMapScope(previousScope);
+        // Lùi về cấp độ Sơ đồ Con trước đó trong Stack
+        currentSubMapNodeIds = mapScopeStack.pop();
+        applyModeRules();
         setTimeout(() => network.fit({ animation: { duration: 300 } }), 100);
       } else {
-        // NẾU ĐÃ Ở SƠ ĐỒ TỔNG BẰNG GỐC -> RESET TOÀN BỘ GÓC XOAY & TRẠNG THÁI
+        // Nếu đã ở Sơ đồ Gốc lớn nhất -> Reset hoàn toàn góc xoay & trả về vị trí phẳng ban đầu
+        currentSubMapNodeIds = null;
         currentRotation = 0; 
         applyRotation(0); 
-        network.fit({ animation: { duration: 300 } }); 
         applyModeRules(); 
         closeDrawer(); 
+        setTimeout(() => network.fit({ animation: { duration: 300 } }), 100);
       }
       saveHistoryState();
     }
