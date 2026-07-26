@@ -79,7 +79,7 @@
     #network { width: 100%; height: 100%; min-height: 550px; background-color: var(--bg-color); cursor: grab; }
     #network:active { cursor: grabbing; }
 
-    /* SLIDE-OUT DRAWER WITH LOCK FEATURE */
+    /* SLIDE-OUT DRAWER */
     #drawer {
       position: absolute; top: 0; right: 0; width: var(--drawer-width); height: 100%;
       background: var(--card-bg); border-left: 1px solid var(--border-color);
@@ -144,12 +144,15 @@
     let clickTimeout = null;
     let isNoteEditable = false;
 
-    // TẬP HỢP KHÓA MỤC TIÊU SƠ ĐỒ CON (LONG-PRESS)
     let lockedSourceNodeId = null;
 
     let activePathNodeIds = new Set();
     let activePathEdgeIds = new Set();
 
+    // TẬP HỢP CÁC CẤP ĐỘ PHÂN CẤP SƠ ĐỒ CON (MAP SCOPE STACK)
+    let mapScopeStack = [];
+
+    // HỆ THỐNG LỊCH SỬ THAO TÁC (UNDO / REDO)
     let historyStack = [];
     let historyIndex = -1;
     let isNavigatingHistory = false;
@@ -267,7 +270,6 @@
       setupInteractiveRotation();
       saveHistoryState();
 
-      // BẮT SỰ KIỆN CLICK CHUỘT SINGLE
       network.on("click", function (params) {
         if (clickTimeout) clearTimeout(clickTimeout);
 
@@ -298,11 +300,9 @@
         }, 220);
       });
 
-      // BẮT SỰ KIỆN NẤM/ẤN GIỮ (HOLD / LONG-PRESS) TẠO SƠ ĐỒ CON A-->B
       network.on("hold", function (params) {
         if (params.nodes.length > 0) {
-          const nodeId = params.nodes[0];
-          handleNodeHold(nodeId);
+          handleNodeHold(params.nodes[0]);
         }
       });
 
@@ -394,18 +394,49 @@
       nodesDataSet.update(updates);
     }
 
-    // --- TÍNH NĂNG ẤN GIỮ (LONG-PRESS) TẠO SƠ ĐỒ CON TRỰC QUAN ---
+    // --- QUẢN LÝ QUAY VỀ SƠ ĐỒ LỚN THEO CẤP BẰNG MAP SCOPE STACK ---
+    function saveMapScope() {
+      const nodeVisibility = {};
+      nodesDataSet.get().forEach(n => {
+        nodeVisibility[n.id] = { hidden: !!n.hidden, opacity: n.opacity !== undefined ? n.opacity : 1.0 };
+      });
+      const edgeVisibility = {};
+      edgesDataSet.get().forEach(e => {
+        edgeVisibility[e.id] = { hidden: !!e.hidden, color: e.color };
+      });
+      mapScopeStack.push({ nodeVisibility, edgeVisibility });
+    }
+
+    function restoreMapScope(scope) {
+      const nodeUpdates = [];
+      for (let id in scope.nodeVisibility) {
+        nodeUpdates.push({
+          id: Number(id),
+          hidden: scope.nodeVisibility[id].hidden,
+          opacity: scope.nodeVisibility[id].opacity
+        });
+      }
+      nodesDataSet.update(nodeUpdates);
+
+      const edgeUpdates = [];
+      for (let id in scope.edgeVisibility) {
+        edgeUpdates.push({
+          id: id,
+          hidden: scope.edgeVisibility[id].hidden,
+          color: scope.edgeVisibility[id].color
+        });
+      }
+      edgesDataSet.update(edgeUpdates);
+    }
+
     function handleNodeHold(nodeId) {
       if (!lockedSourceNodeId) {
-        // ẤN GIỮ LẦN 1 -> KHÓA MỤC TIÊU NÚT A (PHÁT SÁNG VIỀN)
         lockedSourceNodeId = nodeId;
         highlightLockedNode(nodeId, true);
       } else if (lockedSourceNodeId === nodeId) {
-        // ẤN GIỮ LẠI CHÍNH NÚT ĐÓ -> HỦY KHÓA MỤC TIÊU
         highlightLockedNode(lockedSourceNodeId, false);
         lockedSourceNodeId = null;
       } else {
-        // ẤN GIỮ LẦN 2 VÀO NÚT B -> TẠO BẢN ĐỒ CON NỐI DẠNG A-->B
         const sourceId = lockedSourceNodeId;
         highlightLockedNode(sourceId, false);
         lockedSourceNodeId = null;
@@ -438,7 +469,6 @@
       }
     }
 
-    // TẠO BẢN ĐỒ CON BẰNG NÚT BẤM "🗺️ Map con"
     function generateSubMapFromSelected() {
       if (!selectedNodeData) return;
       createSubMapForNode(selectedNodeData.id);
@@ -446,6 +476,8 @@
     }
 
     function createSubMapForNode(rootId) {
+      saveMapScope(); // Lưu cấp độ sơ đồ hiện tại trước khi tạo sơ đồ con mới
+
       const subNodes = new Set([rootId]);
       const subEdges = new Set();
 
@@ -477,6 +509,8 @@
     }
 
     function createSubMapForPath(startId, endId) {
+      saveMapScope(); // Lưu cấp độ sơ đồ hiện tại trước khi tạo sơ đồ con mới
+
       const pathNodes = new Set();
       const pathEdges = new Set();
 
@@ -559,7 +593,6 @@
       }
     }
 
-    // QUẢN LÝ LỊCH SỬ THAO TÁC (UNDO / REDO)
     function saveHistoryState() {
       if (isNavigatingHistory) return;
 
@@ -657,6 +690,7 @@
         lockedSourceNodeId = null;
       }
 
+      mapScopeStack = []; // Xóa stack cấp độ sơ đồ con khi chủ động chuyển dạng
       activeSecondaryNodeId = null;
       activePathNodeIds.clear();
       activePathEdgeIds.clear();
@@ -797,7 +831,7 @@
           return { id: e.id, hidden: true };
         }
       });
-      edgesDataSet.update(updates);
+      edgesDataSet.update(edgesDataSet);
     }
 
     function highlightPath(selectedNodeId) {
@@ -835,13 +869,23 @@
       document.getElementById('drawer').classList.remove('open');
     }
 
+    // TÍNH NĂNG RESET THÔNG MINH (QUAY VỀ SƠ ĐỒ LỚN THEO CẤP)
     function resetView() { 
       document.getElementById('search-input').value = "";
-      currentRotation = 0; 
-      applyRotation(0); 
-      network.fit({ animation: { duration: 300 } }); 
-      applyModeRules(); 
-      closeDrawer(); 
+      
+      if (mapScopeStack.length > 0) {
+        // NẾU ĐANG Ở SƠ ĐỒ CON -> BẤM RESET SẼ LẦN BƯỚC VỀ SƠ ĐỒ LỚN HƠN GẦN NHẤT
+        const previousScope = mapScopeStack.pop();
+        restoreMapScope(previousScope);
+        setTimeout(() => network.fit({ animation: { duration: 300 } }), 100);
+      } else {
+        // NẾU ĐÃ Ở SƠ ĐỒ TỔNG BẰNG GỐC -> RESET TOÀN BỘ GÓC XOAY & TRẠNG THÁI
+        currentRotation = 0; 
+        applyRotation(0); 
+        network.fit({ animation: { duration: 300 } }); 
+        applyModeRules(); 
+        closeDrawer(); 
+      }
       saveHistoryState();
     }
     
