@@ -32,12 +32,12 @@
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
-      padding: 0 10px;
-      gap: 6px;
+      padding: 0 8px;
+      gap: 5px;
       z-index: 10;
     }
     .btn {
-      padding: 6px 9px; border-radius: 4px; border: 1px solid var(--border-color);
+      padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border-color);
       background: var(--bg-color); color: var(--text-color); cursor: pointer; font-size: 12px; font-weight: 600;
       transition: all 0.2s ease;
     }
@@ -45,7 +45,7 @@
     .btn.active { background: var(--accent-color); color: white; }
     .btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    .btn-nav { font-size: 12px; padding: 6px 8px; }
+    .btn-nav { font-size: 12px; padding: 6px 7px; }
 
     /* NÚT GHI CHÚ SMARTER */
     .btn-note {
@@ -72,7 +72,7 @@
 
     #search-input {
       padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border-color);
-      background: var(--bg-color); color: var(--text-color); font-size: 12px; outline: none; width: 120px;
+      background: var(--bg-color); color: var(--text-color); font-size: 12px; outline: none; width: 90px;
     }
 
     #main-container { width: 100%; height: calc(100vh - 50px); min-height: 550px; position: relative; display: flex; }
@@ -110,14 +110,15 @@
 
   <div id="toolbar">
     <button class="btn active" id="btn-mode" onclick="cycleMode()">🌐 Dạng 2: Hệ thống</button>
+    <button class="btn" id="btn-submap" onclick="generateSubMapFromSelected()">🗺️ Map con</button>
     <button class="btn btn-nav" id="btn-undo" onclick="undoState()" disabled>◀ Trước</button>
     <button class="btn btn-nav" id="btn-redo" onclick="redoState()" disabled>Sau ▶</button>
     <button class="btn btn-note" id="btn-note" onclick="toggleDrawerForSelected()">📝 Xem Ghi Chú</button>
     <button class="btn" id="btn-recall" onclick="toggleActiveRecall()">❓ Active Recall</button>
-    <input type="text" id="search-input" placeholder="🔍 (B) hoặc A-->B" oninput="handleSearch(this.value)">
+    <input type="text" id="search-input" placeholder="🔍 Tìm nút..." oninput="handleSearch(this.value)">
     <button class="btn" onclick="resetView()">🔄 Reset</button>
     <button class="btn" onclick="toggleDarkMode()">🌙/☀️</button>
-    <span class="status-guide" id="guide-text">💻 Chuột phải / 📱 2 Ngón tay để xoay 360°</span>
+    <span class="status-guide" id="guide-text">💡 Ấn giữ nút A rồi ấn giữ B để nối đường</span>
   </div>
 
   <div id="main-container">
@@ -142,6 +143,9 @@
     let activeSecondaryNodeId = null;
     let clickTimeout = null;
     let isNoteEditable = false;
+
+    // TẬP HỢP KHÓA MỤC TIÊU SƠ ĐỒ CON (LONG-PRESS)
+    let lockedSourceNodeId = null;
 
     let activePathNodeIds = new Set();
     let activePathEdgeIds = new Set();
@@ -263,6 +267,7 @@
       setupInteractiveRotation();
       saveHistoryState();
 
+      // BẮT SỰ KIỆN CLICK CHUỘT SINGLE
       network.on("click", function (params) {
         if (clickTimeout) clearTimeout(clickTimeout);
 
@@ -291,6 +296,14 @@
             }
           }
         }, 220);
+      });
+
+      // BẮT SỰ KIỆN NẤM/ẤN GIỮ (HOLD / LONG-PRESS) TẠO SƠ ĐỒ CON A-->B
+      network.on("hold", function (params) {
+        if (params.nodes.length > 0) {
+          const nodeId = params.nodes[0];
+          handleNodeHold(nodeId);
+        }
       });
 
       network.on("doubleClick", function (params) {
@@ -381,78 +394,57 @@
       nodesDataSet.update(updates);
     }
 
-    // --- TÍNH NĂNG NỔI BẬT 1: Ổ KHÓA SỬA GHI CHÚ ---
-    function toggleNoteLock() {
-      if (!selectedNodeData) return;
-      isNoteEditable = !isNoteEditable;
-      
-      const contentDiv = document.getElementById('drawer-content');
-      const btnLock = document.getElementById('btn-lock');
-
-      if (isNoteEditable) {
-        contentDiv.contentEditable = "true";
-        contentDiv.focus();
-        btnLock.innerHTML = "🔓 Đang sửa";
-        btnLock.style.background = "#ff9800";
-        btnLock.style.color = "#ffffff";
-        btnLock.style.borderColor = "#f57c00";
+    // --- TÍNH NĂNG ẤN GIỮ (LONG-PRESS) TẠO SƠ ĐỒ CON TRỰC QUAN ---
+    function handleNodeHold(nodeId) {
+      if (!lockedSourceNodeId) {
+        // ẤN GIỮ LẦN 1 -> KHÓA MỤC TIÊU NÚT A (PHÁT SÁNG VIỀN)
+        lockedSourceNodeId = nodeId;
+        highlightLockedNode(nodeId, true);
+      } else if (lockedSourceNodeId === nodeId) {
+        // ẤN GIỮ LẠI CHÍNH NÚT ĐÓ -> HỦY KHÓA MỤC TIÊU
+        highlightLockedNode(lockedSourceNodeId, false);
+        lockedSourceNodeId = null;
       } else {
-        contentDiv.contentEditable = "false";
-        btnLock.innerHTML = "🔒 Chỉ đọc";
-        btnLock.style.background = "";
-        btnLock.style.color = "";
-        btnLock.style.borderColor = "";
-
-        // Tự động lưu nội dung mới chỉnh sửa vào bộ nhớ nút
-        const updatedHTML = contentDiv.innerHTML;
-        selectedNodeData.detail = updatedHTML;
-        nodesDataSet.update({ id: selectedNodeData.id, detail: updatedHTML });
+        // ẤN GIỮ LẦN 2 VÀO NÚT B -> TẠO BẢN ĐỒ CON NỐI DẠNG A-->B
+        const sourceId = lockedSourceNodeId;
+        highlightLockedNode(sourceId, false);
+        lockedSourceNodeId = null;
+        createSubMapForPath(sourceId, nodeId);
         saveHistoryState();
       }
     }
 
-    // --- TÍNH NĂNG NỔI BẬT 2: TỰ ĐỘNG TẠO BẢN ĐỒ CON QUA Ô TÌM KIẾM ---
-    function handleSearch(query) {
-      query = query.trim();
-      if (!query) {
-        applyModeRules();
-        return;
-      }
+    function highlightLockedNode(nodeId, isLocked) {
+      if (!nodeId) return;
+      const node = nodesDataSet.get(nodeId);
+      if (!node) return;
 
-      // 1. Cú pháp (B) -> Tạo bản đồ con xuất phát từ B về sau
-      const subMapMatch = query.match(/^\((.+)\)$/);
-      if (subMapMatch) {
-        const nodeName = subMapMatch[1].trim().toLowerCase();
-        const targetNode = nodesDataSet.get().find(n => n.originalLabel.toLowerCase().includes(nodeName));
-        if (targetNode) {
-          createSubMapForNode(targetNode.id);
-        }
-        return;
-      }
-
-      // 2. Cú pháp A-->B -> Tạo bản đồ con nối giữa A và B
-      const pathMatch = query.match(/^(.+)\-\->(.+)$/);
-      if (pathMatch) {
-        const startName = pathMatch[1].trim().toLowerCase();
-        const endName = pathMatch[2].trim().toLowerCase();
-        const startNode = nodesDataSet.get().find(n => n.originalLabel.toLowerCase().includes(startName));
-        const endNode = nodesDataSet.get().find(n => n.originalLabel.toLowerCase().includes(endName));
-
-        if (startNode && endNode) {
-          createSubMapForPath(startNode.id, endNode.id);
-        }
-        return;
-      }
-
-      // 3. Tìm kiếm thường (Highlight)
-      const matchedNode = nodesDataSet.get().find(n => n.originalLabel.toLowerCase().includes(query.toLowerCase()));
-      if (matchedNode) {
-        network.focus(matchedNode.id, { scale: 1.15, animation: { duration: 400 } });
-        handleSingleClick(matchedNode.id);
+      if (isLocked) {
+        nodesDataSet.update({
+          id: nodeId,
+          borderWidth: 4,
+          color: { border: '#ff3d00', background: node.color ? node.color.background : '#ffffff' },
+          shadow: { enabled: true, color: '#ff3d00', size: 12 }
+        });
+      } else {
+        const isLevel1 = node.level === 1;
+        const colorConfig = groupColors[node.group] || { background: '#ffffff', border: '#cccccc', fontColor: '#2f3437' };
+        nodesDataSet.update({
+          id: nodeId,
+          borderWidth: isLevel1 ? 2.5 : 1.5,
+          color: { background: colorConfig.background, border: colorConfig.border },
+          shadow: false
+        });
       }
     }
 
-    // HÀM TẠO BẢN ĐỒ CON CHO (B)
+    // TẠO BẢN ĐỒ CON BẰNG NÚT BẤM "🗺️ Map con"
+    function generateSubMapFromSelected() {
+      if (!selectedNodeData) return;
+      createSubMapForNode(selectedNodeData.id);
+      saveHistoryState();
+    }
+
     function createSubMapForNode(rootId) {
       const subNodes = new Set([rootId]);
       const subEdges = new Set();
@@ -484,7 +476,6 @@
       setTimeout(() => network.fit({ animation: { duration: 400 } }), 100);
     }
 
-    // HÀM TẠO BẢN ĐỒ CON CHO A-->B
     function createSubMapForPath(startId, endId) {
       const pathNodes = new Set();
       const pathEdges = new Set();
@@ -526,7 +517,49 @@
       setTimeout(() => network.fit({ animation: { duration: 400 } }), 100);
     }
 
-    // --- QUẢN LÝ LỊCH SỬ THAO TÁC (UNDO / REDO) ---
+    function toggleNoteLock() {
+      if (!selectedNodeData) return;
+      isNoteEditable = !isNoteEditable;
+      
+      const contentDiv = document.getElementById('drawer-content');
+      const btnLock = document.getElementById('btn-lock');
+
+      if (isNoteEditable) {
+        contentDiv.contentEditable = "true";
+        contentDiv.focus();
+        btnLock.innerHTML = "🔓 Đang sửa";
+        btnLock.style.background = "#ff9800";
+        btnLock.style.color = "#ffffff";
+        btnLock.style.borderColor = "#f57c00";
+      } else {
+        contentDiv.contentEditable = "false";
+        btnLock.innerHTML = "🔒 Chỉ đọc";
+        btnLock.style.background = "";
+        btnLock.style.color = "";
+        btnLock.style.borderColor = "";
+
+        const updatedHTML = contentDiv.innerHTML;
+        selectedNodeData.detail = updatedHTML;
+        nodesDataSet.update({ id: selectedNodeData.id, detail: updatedHTML });
+        saveHistoryState();
+      }
+    }
+
+    function handleSearch(query) {
+      query = query.trim();
+      if (!query) {
+        applyModeRules();
+        return;
+      }
+
+      const matchedNode = nodesDataSet.get().find(n => n.originalLabel.toLowerCase().includes(query.toLowerCase()));
+      if (matchedNode) {
+        network.focus(matchedNode.id, { scale: 1.15, animation: { duration: 400 } });
+        handleSingleClick(matchedNode.id);
+      }
+    }
+
+    // QUẢN LÝ LỊCH SỬ THAO TÁC (UNDO / REDO)
     function saveHistoryState() {
       if (isNavigatingHistory) return;
 
@@ -619,6 +652,11 @@
     }
 
     function applyModeRules() {
+      if (lockedSourceNodeId) {
+        highlightLockedNode(lockedSourceNodeId, false);
+        lockedSourceNodeId = null;
+      }
+
       activeSecondaryNodeId = null;
       activePathNodeIds.clear();
       activePathEdgeIds.clear();
@@ -793,7 +831,6 @@
     }
     
     function closeDrawer() {
-      // Đóng khóa sửa nếu đang mở trước khi đóng drawer
       if (isNoteEditable) toggleNoteLock();
       document.getElementById('drawer').classList.remove('open');
     }
