@@ -70,9 +70,40 @@
       100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
     }
 
+    /* SEARCH CONTAINER VỚI DROPDOWN GỢI Ý GOOGLE STYLE */
+    #search-container { position: relative; }
     #search-input {
       padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border-color);
-      background: var(--bg-color); color: var(--text-color); font-size: 12px; outline: none; width: 90px;
+      background: var(--bg-color); color: var(--text-color); font-size: 12px; outline: none; width: 100px;
+    }
+    #search-suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 170px;
+      max-height: 180px;
+      overflow-y: auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 100;
+      display: none;
+      margin-top: 4px;
+    }
+    .suggestion-item {
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--text-color);
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .suggestion-item:hover {
+      background: var(--accent-color);
+      color: white;
     }
 
     #main-container { width: 100%; height: calc(100vh - 50px); min-height: 550px; position: relative; display: flex; }
@@ -114,11 +145,16 @@
     <button class="btn btn-nav" id="btn-undo" onclick="undoState()" disabled>◀ Trước</button>
     <button class="btn btn-nav" id="btn-redo" onclick="redoState()" disabled>Sau ▶</button>
     <button class="btn btn-note" id="btn-note" onclick="toggleDrawerForSelected()">📝 Xem Ghi Chú</button>
-    <button class="btn" id="btn-recall" onclick="toggleActiveRecall()">❓ Active Recall</button>
-    <input type="text" id="search-input" placeholder="🔍 Tìm nút..." oninput="handleSearch(this.value)">
+    <button class="btn" id="btn-toggle-secondary" onclick="toggleAllSecondaryEdges()" title="Bật/Tắt hiển thị toàn bộ đường phụ ở Dạng Hệ thống">❓</button>
+    
+    <div id="search-container">
+      <input type="text" id="search-input" placeholder="🔍 Tìm nút..." oninput="handleSearchInput(this.value)" autocomplete="off">
+      <div id="search-suggestions"></div>
+    </div>
+
     <button class="btn" onclick="resetView()">🔄 Reset</button>
     <button class="btn" onclick="toggleDarkMode()">🌙/☀️</button>
-    <span class="status-guide" id="guide-text">💡 Ấn giữ nút A rồi ấn giữ B để nối đường</span>
+    <span class="status-guide" id="guide-text">💡 Bấm ❓ để Bật/Tắt toàn bộ đường phụ</span>
   </div>
 
   <div id="main-container">
@@ -138,9 +174,9 @@
     let edgesDataSet = new vis.DataSet();
     
     let currentMode = 2;
-    let isActiveRecall = false;
     let selectedNodeData = null;
     let activeSecondaryNodeId = null;
+    let showAllSecondaryInMode2 = false; // TRẠNG THÁI BẬT/TẮT TOÀN BỘ ĐƯỜNG PHỤ NÚT ❓
     let clickTimeout = null;
     let isNoteEditable = false;
 
@@ -149,11 +185,9 @@
     let activePathNodeIds = new Set();
     let activePathEdgeIds = new Set();
 
-    // TẬP HỢP CẤP ĐỘ SƠ ĐỒ CON (ĐỘC LẬP HOÀN TOÀN VỚI DẠNG HIỂN THỊ)
-    let currentSubMapNodeIds = null; // null = Sơ đồ lớn gốc
-    let mapScopeStack = [];          // Stack lưu lịch sử các cấp sơ đồ con
+    let currentSubMapNodeIds = null;
+    let mapScopeStack = [];
 
-    // HỆ THỐNG LỊCH SỬ THAO TÁC (UNDO / REDO)
     let historyStack = [];
     let historyIndex = -1;
     let isNavigatingHistory = false;
@@ -209,6 +243,28 @@
       }
     }
 
+    // TÍNH TOÁN KÍCH THƯỚC MŨI TÊN & ĐỘ RÕ/NHẠT MÀU THEO LEVEL CỦA NÚT
+    function getEdgeStyleByLevel(edge) {
+      const fromNode = nodesDataSet.get(edge.from);
+      const level = fromNode ? (fromNode.level || 1) : 1;
+      
+      let width = 3.5;
+      let opacity = 1.0;
+
+      if (level === 2) {
+        width = 2.2;
+        opacity = 0.75;
+      } else if (level >= 3) {
+        width = 1.2;
+        opacity = 0.45;
+      }
+
+      if (!edge.isMain && !edge.isImportant) {
+        width = Math.max(1.0, width * 0.85);
+      }
+      return { width, opacity };
+    }
+
     async function initNetwork() {
       const rawData = await fetchLessonData();
 
@@ -221,7 +277,7 @@
           originalLabel: node.label,
           title: node.tooltip,
           detail: node.detail,
-          level: node.level,
+          level: node.level || 1,
           group: node.group,
           color: { background: colorConfig.background, border: colorConfig.border },
           font: { size: isLevel1 ? 15 : 12.5, color: colorConfig.fontColor, bold: isLevel1 },
@@ -231,8 +287,11 @@
         };
       });
 
+      nodesDataSet.add(processedNodes);
+
       const processedEdges = rawData.edges.map(edge => {
         const isMainOrImportant = edge.isMain || edge.isImportant;
+        const style = getEdgeStyleByLevel(edge);
         return {
           id: edge.id || `e_${edge.from}_${edge.to}`,
           from: edge.from,
@@ -240,16 +299,15 @@
           label: edge.label,
           isMain: edge.isMain,
           isImportant: edge.isImportant,
-          width: isMainOrImportant ? 3 : 1.2,
+          width: style.width,
           dashes: isMainOrImportant ? false : [5, 5],
           arrows: isMainOrImportant ? 'to' : '',
-          color: { color: isMainOrImportant ? '#2eaadc' : '#999999', opacity: 1 },
+          color: { color: isMainOrImportant ? '#2eaadc' : '#e74c3c', opacity: style.opacity },
           font: { size: 11, align: 'horizontal', background: '#ffffff', strokeWidth: 2, strokeColor: '#ffffff' },
           smooth: { type: 'cubicBezier', forceDirection: 'horizontal' }
         };
       });
 
-      nodesDataSet.add(processedNodes);
       edgesDataSet.add(processedEdges);
 
       const container = document.getElementById('network');
@@ -269,6 +327,7 @@
 
       applyModeRules();
       setupInteractiveRotation();
+      setupClickOutsideSearch();
       saveHistoryState();
 
       network.on("click", function (params) {
@@ -395,16 +454,25 @@
       nodesDataSet.update(updates);
     }
 
-    // --- BỘ ĐỘNG CƠ ĐIỀU KHIỂN HIỂN THỊ CHUẨN CẤP ĐỘ (MODE 1 & MODE 2) ---
+    // --- TÍNH NĂNG NÚT ❓: BẬT/TẮT TOÀN BỘ ĐƯỜNG PHỤ Ở DẠNG HỆ THỐNG ---
+    function toggleAllSecondaryEdges() {
+      showAllSecondaryInMode2 = !showAllSecondaryInMode2;
+      const btn = document.getElementById('btn-toggle-secondary');
+      btn.classList.toggle('active', showAllSecondaryInMode2);
+      
+      if (currentMode === 2) {
+        renderMode2();
+      }
+    }
+
+    // RENDERING MODE 2 (HỆ THỐNG)
     function renderMode2() {
-      // 1. Cập nhật Nodes theo SubMap scope
       const nodeUpdates = nodesDataSet.get().map(n => {
         const isVisibleInScope = !currentSubMapNodeIds || currentSubMapNodeIds.has(n.id);
         return { id: n.id, hidden: !isVisibleInScope, opacity: 1.0 };
       });
       nodesDataSet.update(nodeUpdates);
 
-      // 2. Cập nhật Edges theo SubMap scope & Quy tắc Mode 2
       const edgeUpdates = edgesDataSet.get().map(e => {
         const fromVisible = !currentSubMapNodeIds || currentSubMapNodeIds.has(e.from);
         const toVisible = !currentSubMapNodeIds || currentSubMapNodeIds.has(e.to);
@@ -415,26 +483,35 @@
         }
 
         const isMainOrImportant = e.isMain || e.isImportant;
-        if (activeSecondaryNodeId) {
+        const style = getEdgeStyleByLevel(e);
+
+        if (showAllSecondaryInMode2) {
+          // HIỆN TOÀN BỘ ĐƯỜNG PHỤ KHI BẤM NÚT ❓
+          return {
+            id: e.id,
+            hidden: false,
+            color: { color: isMainOrImportant ? '#2eaadc' : '#e74c3c', opacity: style.opacity }
+          };
+        } else if (activeSecondaryNodeId) {
           const isConnectedToTarget = (e.from === activeSecondaryNodeId || e.to === activeSecondaryNodeId);
           if (isMainOrImportant) {
-            return { id: e.id, hidden: false, color: { color: '#2eaadc', opacity: 1 } };
+            return { id: e.id, hidden: false, color: { color: '#2eaadc', opacity: style.opacity } };
           } else if (isConnectedToTarget) {
-            return { id: e.id, hidden: false, color: { color: '#e74c3c', opacity: 1 } };
+            return { id: e.id, hidden: false, color: { color: '#e74c3c', opacity: style.opacity } };
           } else {
             return { id: e.id, hidden: true };
           }
         } else {
-          return { id: e.id, hidden: !isMainOrImportant, color: { color: '#2eaadc', opacity: 1 } };
+          return { id: e.id, hidden: !isMainOrImportant, color: { color: '#2eaadc', opacity: style.opacity } };
         }
       });
       edgesDataSet.update(edgeUpdates);
     }
 
+    // RENDERING MODE 1 (BẢN ĐỒ)
     function renderMode1() {
       const hasActivePath = activePathNodeIds.size > 0;
 
-      // 1. Cập nhật Nodes theo SubMap scope & Active Path
       const nodeUpdates = nodesDataSet.get().map(n => {
         const isVisibleInScope = !currentSubMapNodeIds || currentSubMapNodeIds.has(n.id);
         return {
@@ -445,7 +522,6 @@
       });
       nodesDataSet.update(nodeUpdates);
 
-      // 2. Cập nhật Edges theo SubMap scope & Active Path
       const edgeUpdates = edgesDataSet.get().map(e => {
         const fromVisible = !currentSubMapNodeIds || currentSubMapNodeIds.has(e.from);
         const toVisible = !currentSubMapNodeIds || currentSubMapNodeIds.has(e.to);
@@ -456,10 +532,11 @@
         }
 
         const isInPath = activePathEdgeIds.has(e.id);
+        const style = getEdgeStyleByLevel(e);
         return {
           id: e.id,
           hidden: !isInPath,
-          color: { color: e.isMain ? '#2eaadc' : '#e74c3c', opacity: 1.0 }
+          color: { color: e.isMain ? '#2eaadc' : '#e74c3c', opacity: style.opacity }
         };
       });
       edgesDataSet.update(edgeUpdates);
@@ -483,7 +560,57 @@
       }
     }
 
-    // --- TÍNH NĂNG TẠO BẢN ĐỒ CON CHUẨN CẤP ĐỘ ---
+    // --- TÍNH NĂNG TÌM KIẾM MỚI VỚI NÚT GỢI Ý (GOOGLE SEARCH STYLE) & CHỐNG GIẬT LAG ---
+    function handleSearchInput(query) {
+      const suggestionsDiv = document.getElementById('search-suggestions');
+      query = query.trim().toLowerCase();
+
+      if (!query) {
+        suggestionsDiv.style.display = 'none';
+        suggestionsDiv.innerHTML = '';
+        return; // XÓA CHỮ KHÔNG CÒN LÀM GIẬT / NẢY SƠ ĐỒ NỮA
+      }
+
+      const matches = nodesDataSet.get().filter(n => {
+        const isVisibleInScope = !currentSubMapNodeIds || currentSubMapNodeIds.has(n.id);
+        return isVisibleInScope && n.originalLabel.toLowerCase().includes(query);
+      });
+
+      if (matches.length === 0) {
+        suggestionsDiv.style.display = 'none';
+        suggestionsDiv.innerHTML = '';
+        return;
+      }
+
+      suggestionsDiv.innerHTML = '';
+      matches.slice(0, 8).forEach(node => {
+        const item = document.createElement('div');
+        item.className = 'suggestion-item';
+        item.innerText = node.originalLabel;
+        item.onclick = () => selectSearchSuggestion(node.id, node.originalLabel);
+        suggestionsDiv.appendChild(item);
+      });
+      suggestionsDiv.style.display = 'block';
+    }
+
+    function selectSearchSuggestion(nodeId, label) {
+      document.getElementById('search-input').value = label;
+      document.getElementById('search-suggestions').style.display = 'none';
+
+      network.focus(nodeId, { scale: 1.15, animation: { duration: 400 } });
+      handleSingleClick(nodeId);
+    }
+
+    function setupClickOutsideSearch() {
+      document.addEventListener('click', (e) => {
+        const container = document.getElementById('search-container');
+        if (container && !container.contains(e.target)) {
+          document.getElementById('search-suggestions').style.display = 'none';
+        }
+      });
+    }
+
+    // --- TÍNH NĂNG TẠO BẢN ĐỒ CON ---
     function handleNodeHold(nodeId) {
       if (!lockedSourceNodeId) {
         lockedSourceNodeId = nodeId;
@@ -531,7 +658,6 @@
     }
 
     function createSubMapForNode(rootId) {
-      // Lưu cấp độ sơ đồ con hiện tại vào Stack
       mapScopeStack.push(currentSubMapNodeIds ? new Set(currentSubMapNodeIds) : null);
 
       const subNodes = new Set([rootId]);
@@ -554,7 +680,6 @@
     }
 
     function createSubMapForPath(startId, endId) {
-      // Lưu cấp độ sơ đồ con hiện tại vào Stack
       mapScopeStack.push(currentSubMapNodeIds ? new Set(currentSubMapNodeIds) : null);
 
       const pathNodes = new Set();
@@ -614,21 +739,7 @@
       }
     }
 
-    function handleSearch(query) {
-      query = query.trim();
-      if (!query) {
-        applyModeRules();
-        return;
-      }
-
-      const matchedNode = nodesDataSet.get().find(n => n.originalLabel.toLowerCase().includes(query.toLowerCase()));
-      if (matchedNode) {
-        network.focus(matchedNode.id, { scale: 1.15, animation: { duration: 400 } });
-        handleSingleClick(matchedNode.id);
-      }
-    }
-
-    // --- LỊCH SỬ THAO TÁC UNDO / REDO ---
+    // LỊCH SỬ THAO TÁC UNDO / REDO
     function saveHistoryState() {
       if (isNavigatingHistory) return;
 
@@ -638,6 +749,7 @@
         activePathNodes: Array.from(activePathNodeIds),
         activePathEdges: Array.from(activePathEdgeIds),
         activeSecondaryNodeId: activeSecondaryNodeId,
+        showAllSecondary: showAllSecondaryInMode2,
         currentSubMapNodes: currentSubMapNodeIds ? Array.from(currentSubMapNodeIds) : null,
         mapScopeStackSnap: mapScopeStack.map(s => s ? Array.from(s) : null),
         drawerOpen: document.getElementById('drawer').classList.contains('open')
@@ -657,6 +769,9 @@
 
       currentMode = state.mode;
       updateModeUI();
+
+      showAllSecondaryInMode2 = !!state.showAllSecondary;
+      document.getElementById('btn-toggle-secondary').classList.toggle('active', showAllSecondaryInMode2);
 
       currentSubMapNodeIds = state.currentSubMapNodes ? new Set(state.currentSubMapNodes) : null;
       mapScopeStack = state.mapScopeStackSnap ? state.mapScopeStackSnap.map(s => s ? new Set(s) : null) : [];
@@ -724,7 +839,7 @@
       currentMode = (currentMode === 2) ? 1 : 2;
       updateModeUI();
       closeDrawer();
-      applyModeRules(); // Chuyển Dạng giữ nguyên Cấp độ Sơ đồ Con
+      applyModeRules();
       saveHistoryState();
     }
 
@@ -800,16 +915,6 @@
       nodesDataSet.update(updates);
     }
 
-    function toggleActiveRecall() {
-      isActiveRecall = !isActiveRecall;
-      document.getElementById('btn-recall').classList.toggle('active', isActiveRecall);
-      const updates = nodesDataSet.get().map(node => ({
-        id: node.id,
-        label: isActiveRecall ? '❓ [Khái niệm]' : node.originalLabel
-      }));
-      nodesDataSet.update(updates);
-    }
-
     function openDrawer(content) {
       document.getElementById('drawer-content').innerHTML = content || 'Không có chi tiết.';
       document.getElementById('drawer').classList.add('open');
@@ -820,17 +925,15 @@
       document.getElementById('drawer').classList.remove('open');
     }
 
-    // --- TÍNH NĂNG RESET THÔNG MINH (CHO PHÉP QUAY VỀ SƠ ĐỒ CON DÙ CHUYỂN DẠNG) ---
     function resetView() { 
       document.getElementById('search-input').value = "";
+      document.getElementById('search-suggestions').style.display = 'none';
       
       if (mapScopeStack.length > 0) {
-        // Lùi về cấp độ Sơ đồ Con trước đó trong Stack
         currentSubMapNodeIds = mapScopeStack.pop();
         applyModeRules();
         setTimeout(() => network.fit({ animation: { duration: 300 } }), 100);
       } else {
-        // Nếu đã ở Sơ đồ Gốc lớn nhất -> Reset hoàn toàn góc xoay & trả về vị trí phẳng ban đầu
         currentSubMapNodeIds = null;
         currentRotation = 0; 
         applyRotation(0); 
