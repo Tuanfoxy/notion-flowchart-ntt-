@@ -226,23 +226,37 @@
     };
 
     async function fetchLessonData() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const jsonPath = urlParams.get('lesson');
-      if (!jsonPath) return defaultData;
+  const urlParams = new URLSearchParams(window.location.search);
+  const jsonPath = urlParams.get('lesson');
+  if (!jsonPath) return defaultData;
 
-      try {
-        const response = await fetch(jsonPath);
-        if (!response.ok) throw new Error("Không tìm thấy file JSON bài học!");
-        return await response.json();
-      } catch (err) {
-        console.error("Lỗi nạp bài học:", err);
-        return {
-          "nodes": [{ "id": 1, "label": "⚠️ Lỗi nạp bài học", "level": 1, "group": "resistance", "tooltip": "Lỗi", "detail": `<h3>⚠️ Không tải được dữ liệu bài học</h3><p>Đường dẫn <code>${jsonPath}</code> không tồn tại trên GitHub.</p>` }],
-          "edges": []
-        };
-      }
-    }
+  try {
+    const response = await fetch(jsonPath);
+    if (!response.ok) throw new Error("Không tìm thấy file bài học trên GitHub!");
+    let text = await response.text();
 
+    // 1. Tự động bóc tách JSON nếu nằm trong khối ```json ... ``` hoặc ``` ... ```
+    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    if (jsonMatch) text = jsonMatch[1];
+
+    // 2. Tẩy ký tự ẩn UTF-8 BOM (nếu có) và parse JSON
+    text = text.replace(/^\uFEFF/, '').trim();
+    return JSON.parse(text);
+  } catch (err) {
+    console.error("Lỗi nạp bài học:", err);
+    return {
+      "nodes": [{ 
+        "id": 1, 
+        "label": "⚠️ Lỗi nạp bài học", 
+        "level": 1, 
+        "group": "resistance", 
+        "tooltip": "Lỗi", 
+        "detail": `<h3>⚠️ Không tải được dữ liệu</h3><p>Đường dẫn: <code>${jsonPath}</code></p><p>Chi tiết lỗi: <b style="color: #e74c3c;">${err.message}</b></p>` 
+      }],
+      "edges": []
+    };
+  }
+}
     // TÍNH TOÁN KÍCH THƯỚC MŨI TÊN & ĐỘ RÕ/NHẠT MÀU THEO LEVEL CỦA NÚT
     function getEdgeStyleByLevel(edge) {
       const fromNode = nodesDataSet.get(edge.from);
