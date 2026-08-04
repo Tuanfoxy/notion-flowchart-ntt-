@@ -279,10 +279,18 @@
       return { width, opacity };
     }
 
-    async function initNetwork() {
+   async function initNetwork() {
       const rawData = await fetchLessonData();
 
-      const processedNodes = rawData.nodes.map(node => {
+      // 1. LỌC BỎ CÁC NÚT RỖNG LABEL HOẶC THIẾU ID
+      const validRawNodes = (rawData.nodes || []).filter(n => n && n.id !== undefined && n.label && String(n.label).trim() !== "");
+      const validNodeIds = new Set(validRawNodes.map(n => n.id));
+
+      // 2. LỌC BỎ CÁC ĐƯỜNG NỐI TRỎ VÀO ID KHÔNG TỒN TẠI (CHỐNG LỖI TỰ ĐẺ NÚT TRÒN RỖNG)
+      const validRawEdges = (rawData.edges || []).filter(e => e && validNodeIds.has(e.from) && validNodeIds.has(e.to));
+
+      // 3. TẠO DỮ LIỆU NÚT ĐÃ LỌC SACH
+      const processedNodes = validRawNodes.map(node => {
         const isLevel1 = node.level === 1;
         const colorConfig = groupColors[node.group] || { background: '#ffffff', border: '#cccccc', fontColor: '#2f3437' };
         return {
@@ -303,25 +311,25 @@
 
       nodesDataSet.add(processedNodes);
 
-      // THÊM _${index} VÀO ID ĐỂ KHÔNG BAO GIỜ BỊ LỖI TRÙNG MÃ
-const processedEdges = rawData.edges.map((edge, index) => {
-  const isMainOrImportant = edge.isMain || edge.isImportant;
-  const style = getEdgeStyleByLevel(edge);
-  return {
-    id: edge.id || `e_${edge.from}_${edge.to}_${index}`,
-    from: edge.from,
-    to: edge.to,
-    label: edge.label,
-    isMain: edge.isMain,
-    isImportant: edge.isImportant,
-    width: style.width,
-    dashes: isMainOrImportant ? false : [5, 5],
-    arrows: edge.arrows !== undefined ? edge.arrows : (isMainOrImportant ? 'to' : ''),
-    color: { color: isMainOrImportant ? '#2eaadc' : '#e74c3c', opacity: style.opacity },
-    font: { size: 11, align: 'horizontal', background: '#ffffff', strokeWidth: 2, strokeColor: '#ffffff' },
-    smooth: { type: 'cubicBezier', forceDirection: 'horizontal' }
-  };
-});
+      // 4. TẠO DỮ LIỆU ĐƯỜNG NỐI ĐÃ LỌC SACH
+      const processedEdges = validRawEdges.map((edge, index) => {
+        const isMainOrImportant = edge.isMain || edge.isImportant;
+        const style = getEdgeStyleByLevel(edge);
+        return {
+          id: edge.id || `e_${edge.from}_${edge.to}_${index}`,
+          from: edge.from,
+          to: edge.to,
+          label: edge.label,
+          isMain: edge.isMain,
+          isImportant: edge.isImportant,
+          width: style.width,
+          dashes: isMainOrImportant ? false : [5, 5],
+          arrows: edge.arrows !== undefined ? edge.arrows : (isMainOrImportant ? 'to' : ''),
+          color: { color: isMainOrImportant ? '#2eaadc' : '#e74c3c', opacity: style.opacity },
+          font: { size: 11, align: 'horizontal', background: '#ffffff', strokeWidth: 2, strokeColor: '#ffffff' },
+          smooth: { type: 'cubicBezier', forceDirection: 'horizontal' }
+        };
+      });
 
       edgesDataSet.add(processedEdges);
 
