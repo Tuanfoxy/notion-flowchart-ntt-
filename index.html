@@ -469,14 +469,41 @@ const processedEdges = rawData.edges.map((edge, index) => {
       nodesDataSet.update(updates);
     }
 
-    // --- TÍNH NĂNG NÚT ❓: BẬT/TẮT TOÀN BỘ ĐƯỜNG PHỤ Ở DẠNG HỆ THỐNG ---
+    // --- TÍNH NĂNG NÚT ❓: LÀM MỜ ĐƯỜNG CHÍNH, NỔI BẬT ĐƯỜNG PHỤ & TỰ ĐỘNG SẮP XẾP ---
     function toggleAllSecondaryEdges() {
       showAllSecondaryInMode2 = !showAllSecondaryInMode2;
       const btn = document.getElementById('btn-toggle-secondary');
       btn.classList.toggle('active', showAllSecondaryInMode2);
-      
+
       if (currentMode === 2) {
         renderMode2();
+
+        if (showAllSecondaryInMode2) {
+          // Bật lực vật lý ngắn hạn để các nút tự dãn ra, nhìn các liên kết phụ rõ ràng hơn
+          network.setOptions({
+            physics: {
+              enabled: true,
+              solver: 'forceAtlas2Based',
+              forceAtlas2Based: { gravitationalConstant: -50, centralGravity: 0.01, springLength: 120 }
+            }
+          });
+          // Tắt lực vật lý sau 0.8 giây để cố định sơ đồ và căn vừa màn hình
+          setTimeout(() => {
+            network.setOptions({ physics: { enabled: false } });
+            network.fit({ animation: { duration: 400 } });
+          }, 800);
+        } else {
+          // Khôi phục lại tọa độ sắp xếp chuẩn ban đầu
+          if (basePositions) {
+            const updates = Object.keys(basePositions).map(id => ({
+              id: Number(id),
+              x: basePositions[id].x,
+              y: basePositions[id].y
+            }));
+            nodesDataSet.update(updates);
+            network.fit({ animation: { duration: 400 } });
+          }
+        }
       }
     }
 
@@ -501,12 +528,22 @@ const processedEdges = rawData.edges.map((edge, index) => {
         const style = getEdgeStyleByLevel(e);
 
         if (showAllSecondaryInMode2) {
-          // HIỆN TOÀN BỘ ĐƯỜNG PHỤ KHI BẤM NÚT ❓
-          return {
-            id: e.id,
-            hidden: false,
-            color: { color: isMainOrImportant ? '#2eaadc' : '#e74c3c', opacity: style.opacity }
-          };
+          // BẤM NÚT ❓: LÀM MỜ ĐƯỜNG CHÍNH (XÁM NHẠT, 0.15 OPACITY), NỔI BẬT ĐƯỜNG PHỤ (ĐỎ, 1.0 OPACITY)
+          if (e.isMain) {
+            return {
+              id: e.id,
+              hidden: false,
+              color: { color: '#cccccc', opacity: 0.15 },
+              width: 1
+            };
+          } else {
+            return {
+              id: e.id,
+              hidden: false,
+              color: { color: '#e74c3c', opacity: 1.0 },
+              width: 2.5
+            };
+          }
         } else if (activeSecondaryNodeId) {
           const isConnectedToTarget = (e.from === activeSecondaryNodeId || e.to === activeSecondaryNodeId);
           if (isMainOrImportant) {
@@ -522,7 +559,6 @@ const processedEdges = rawData.edges.map((edge, index) => {
       });
       edgesDataSet.update(edgeUpdates);
     }
-
     // RENDERING MODE 1 (BẢN ĐỒ)
     function renderMode1() {
       const hasActivePath = activePathNodeIds.size > 0;
